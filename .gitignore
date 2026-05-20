@@ -1,0 +1,42 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+release/
+*.tgz
+
+# Environment variables
+.env
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# IDE specific files
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Coverage directory
+coverage/
+
+# Temporary files
+tmp/
+temp/
+
+# Generated artifacts
+output/
+
+.wiki/
+data/
+
+my-work/

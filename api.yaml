@@ -1,0 +1,1956 @@
+# Generated from the CRM app route export.
+# If the API changes, regenerate this contract from the app route source.
+openapi: 3.1.0
+info:
+  title: "CRM Data API"
+  version: 1.0.0
+  description: "Real estate franchising CRM API contract for agent access. Agents build requests from this contract and the host-provided api tool loads local configuration and executes them."
+servers:
+  - url: "${CRM_BASE_URL}"
+    description: "Resolved by the host api tool from local configuration at request time"
+security:
+  - BearerAuth:
+      []
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: CRM_ACCESS_TOKEN
+      description: "Applied by the host api tool during request execution"
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+paths:
+  /api/data/contacts:
+    get:
+      tags:
+        - Contacts
+      operationId: get_api_data_contacts
+      summary: "GET /api/data/contacts"
+      description: "Field locations are inferred from the raw route export: path params from {param}, GET fields as query params, write-route non-path fields as JSON body fields."
+      responses:
+        200:
+          description: "Successful response."
+        400:
+          description: "Invalid request or validation error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized.
+    put:
+      tags:
+        - Contacts
+      operationId: put_api_data_contacts
+      summary: "PUT /api/data/contacts"
+      description: "Returns a single record. Field locations are inferred from the raw route export: path params from {param}, GET fields as query params, write-route non-path fields as JSON body fields."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                personId:
+                  type: number
+              required:
+                - personId
+      responses:
+        200:
+          description: "Successful response."
+        400:
+          description: "Invalid request or validation error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized.
+    post:
+      tags:
+        - Contacts
+      operationId: post_api_data_contacts
+      summary: "POST /api/data/contacts"
+      description: "Field locations are inferred from the raw route export: path params from {param}, GET fields as query params, write-route non-path fields as JSON body fields."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                data:
+                  type: string
+                accountId:
+                  type: number
+              required:
+                - name
+                - data
+                - accountId
+      responses:
+        200:
+          description: "Successful response."
+        400:
+          description: "Invalid request or validation error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized.
+  /api/data/contacts/searchAll:
+    get:
+      tags:
+        - Contacts
+      operationId: get_api_data_contacts_searchAll
+      summary: "GET /api/data/contacts/searchAll"
+      description: "Field locations are inferred from the raw route export: path params from {param}, GET fields as query params, write-route non-path fields as JSON body fields."
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: "Successful response."
+        400:
+          description: "Invalid request or validation error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized.
+  /api/data/contacts/search:
+    get:
+      tags:
+        - Contacts
+      operationId: get_api_data_contacts_search
+      summary: "GET /api/data/contacts/search"
+      description: "Field locations are inferred from the raw route export: path params from {param}, GET fields as query params, write-route non-path fields as JSON body fields."
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: "Successful response."
+        400:
+          description: "Invalid request or validation error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized.
+  /api/data/contacts/count:
+    get:
+      tags:
+        - Contacts
+      operationId: get_api_data_contacts_count
+      summary: "GET /api/data/contacts/count"
+      description: "Field locations are inferred from the raw route export: path params from {param}, GET fields as query params, write-route non-path fields as JSON body fields."
+      responses:
+        200:
+          description: "Successful response."
+        400:
+          description: "Invalid request or validation error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized.
+  /api/data/contacts/{id}:
+    get:
+      tags:
+        - Contacts
+      operationId: get_api_data_contacts_id
+      summary: "GET /api/data/contacts/{id}"
+      description: "Returns a single record. Field locations are inferred from the raw route export: path params from {param}, GET fields as query params, write-route non-path fields as JSON body fields."
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        200:
+          description: "Successful response."
+        400:
+          description: "Invalid request or validation error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized.
+    patch:
+      tags:
+        - Contacts
+      operationId: patch_api_data_contacts_id
+      summary: "PATCH /api/data/contacts/{id}"
+      description: "Field locations are inferred from the raw route export: path params from {param}, GET fields as query params, write-route non-path fields as JSON body fields."
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                data:
+      responses:
+        200:
+          description: "Successful response."
+        400:
+          description: "Invalid request or validation error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized.
+    delete:
+      tags:
+        - Contacts
+      operationId: delete_api_data_contacts_id
+      summary: "DELETE /api/data/contacts/{id}"
+      description: "Field locations are inferred from the raw route export: path params from {param}, GET fields as query params, write-route non-path fields as JSON body fields."
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        200:
+          description: "Successful response."
+        400:
+          description: "Invalid request or validation error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized.
+  /api/data/accounts/{id}/contacts:
+    get:
+      tags:
+        - Accounts
+      operationId: get_api_data_accounts_id_contacts
+      summary: "GET /api/data/accounts/{id}/contacts"
+      description: "Field locations are inferred from the raw route export: path params from {param}, GET fields as query params, write-route non-path fields as JSON body fields."
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+        - name: initialContactId
+          in: query
+          required: false
+          schema:
+      responses:
+        200:
+          description: "Successful response."
+        400:
+          description: "Invalid request or validation error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized.
+  /api/data/users/{userId}/contacts:
+    get:
+      tags:
+        - Users
+      operationId: get_api_data_users_userId_contacts
+      summary: "GET /api/data/users/{userId}/contacts"
+      description: "Field locations are inferred from the raw route export: path params from {param}, GET fields as query params, write-route non-path fields as JSON body fields."
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        200:
+          description: "Successful response."
+        400:
+          description: "Invalid request or validation error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized.
+    post:
+      tags:
+        - Users
+      operationId: post_api_data_users_userId_contacts
+      summary: "POST /api/data/users/{userId}/contacts"
+      description: "Field locations are inferred from the raw route export: path params from {param}, GET fields as query params, write-route non-path fields as JSON body fields."
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id:
+      responses:
+        200:
+          description: "Successful response."
+        400:
+          description: "Invalid request or validation error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized.
+  /api/data/team/{teamId}/contacts:
+    get:
+      tags:
+        - Teams
+      operationId: get_api_data_team_teamId_contacts
+      summary: "GET /api/data/team/{teamId}/contacts"
+      description: "Field locations are inferred from the raw route export: path params from {param}, GET fields as query params, write-route non-path fields as JSON body fields."
+      parameters:
+        - name: teamId
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        200:
+          description: "Successful response."
+        400:
+          description: "Invalid request or validation error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized.
+  /api/data/notes/count:
+    get:
+      tags:
+        - Notes
+      operationId: get_api_data_notes_count
+      summary: "GET /api/data/notes/count"
+      description: "Returns a single record. Field locations are inferred from the raw route export: path params from {param}, GET fields as query params, write-route non-path fields as JSON body fields."
+      responses:
+        200:
+          description: "Successful response."
+        400:
+          description: "Invalid request or validation error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized.
+  /api/data/contacts/{id}/notes:
+    get:
+      tags:
+        - Contacts
+      operationId: get_api_data_contacts_id_notes
+      summary: "GET /api/data/contacts/{id}/notes"
+      description: "Field locations are inferred from the raw route export: path params from {param}, GET fields as query params, write-route non-path fields as JSON body fields."
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        200:
+          description: "Successful response."
+        400:
+          description: "Invalid request or validation error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized.
+  /api/data/accounts/{id}/notes:
+    get:
+      tags:
+        - Accounts
+      operationId: get_api_data_accounts_id_notes
+      summary: "GET /api/data/accounts/{id}/notes"
+      description: "Field locations are inferred from the raw route export: path params from {param}, GET fields as query params, write-route non-path fields as JSON body fields."
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        200:
+          description: "Successful response."
+        400:
+          description: "Invalid request or validation error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized.
+  /api/data/users/me/notes:
+    get:
+      tags:
+        - Users
+      operationId: get_api_data_users_me_notes
+      summary: "GET /api/data/users/me/notes"
+      description: "Field locations are inferred from the raw route export: path params from {param}, GET fields as query params, write-route non-path fields as JSON body fields."
+      responses:
+        200:
+          description: "Successful response."
+        400:
+          description: "Invalid request or validation error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized.
+  /api/data/notes:
+    post:
+      tags:
+        - Notes
+      operationId: post_api_data_notes
+      summary: "POST /api/data/notes"
+      description: "Field locations are inferred from the raw route export: path params from {param}, GET fields as query params, write-route non-path fields as JSON body fields."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                content:
+                  type: string
+                type:
+                  nullable: true
+                teamIds:
+                  nullable: true
+                objectIds:
+                  nullable: true
+                objectType:
+                  type: string
+                flags:
+              required:
+                - title
+                - content
+                - type
+                - teamIds
+                - objectIds
+                - objectType
+      responses:
+        200:
+          description: "Successful response."
+        400:
+          description: "Invalid request or validation error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized.
+  /api/data/notes/{id}:
+    put:
+      tags:
+        - Notes
+      operationId: put_api_data_notes_id
+      summary: "PUT /api/data/notes/{id}"
+      description: "Field locations are inferred from the raw route export: path params from {param}, GET fields as query params, write-route non-path fields as JSON body fields."
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                content:
+                  type: string
+                type:
+                  nullable: true
+                teamIds:
+                  nullable: true
+                flags:
+              required:
+                - title
+                - content
+                - type
+                - teamIds
+      responses:
+        200:
+          description: "Successful response."
+        400:
+          description: "Invalid request or validation error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized.
+    patch:
+      tags:
+        - Notes
+      operationId: patch_api_data_notes_id
+      summary: "PATCH /api/data/notes/{id}"
+      description: "Field locations are inferred from the raw route export: path params from {param}, GET fields as query params, write-route non-path fields as JSON body fields."
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                startDate:
+                  nullable: true
+                dueDate:
+                  nullable: true
+              required:
+                - startDate
+                - dueDate
+      responses:
+        200:
+          description: "Successful response."
+        400:
+          description: "Invalid request or validation error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized.
+    delete:
+      tags:
+        - Notes
+      operationId: delete_api_data_notes_id
+      summary: "DELETE /api/data/notes/{id}"
+      description: "Field locations are inferred from the raw route export: path params from {param}, GET fields as query params, write-route non-path fields as JSON body fields."
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        200:
+          description: "Successful response."
+        400:
+          description: "Invalid request or validation error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized.
+  /api/data/notes/{id}/status:
+    patch:
+      tags:
+        - Notes
+      operationId: patch_api_data_notes_id_status
+      summary: "PATCH /api/data/notes/{id}/status"
+      description: "Field locations are inferred from the raw route export: path params from {param}, GET fields as query params, write-route non-path fields as JSON body fields."
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: number
+              required:
+                - status
+      responses:
+        200:
+          description: "Successful response."
+        400:
+          description: "Invalid request or validation error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized.
+  /api/data/accounts/search:
+    get:
+      tags:
+        - Accounts
+      operationId: get_api_data_accounts_search
+      summary: "GET /api/data/accounts/search"
+      description: "Field locations are inferred from the raw route export: path params from {param}, GET fields as query params, write-route non-path fields as JSON body fields."
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: "Successful response."
+        400:
+          description: "Invalid request or validation error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized.
+  /api/data/accounts/count:
+    get:
+      tags:
+        - Accounts
+      operationId: get_api_data_accounts_count
+      summary: "GET /api/data/accounts/count"
+      description: "Field locations are inferred from the raw route export: path params from {param}, GET fields as query params, write-route non-path fields as JSON body fields."
+      responses:
+        200:
+          description: "Successful response."
+        400:
+          description: "Invalid request or validation error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized.
+  /api/data/accounts:
+    get:
+      tags:
+        - Accounts
+      operationId: get_api_data_accounts
+      summary: "GET /api/data/accounts"
+      description: "Field locations are inferred from the raw route export: path params from {param}, GET fields as query params, write-route non-path fields as JSON body fields."
+      responses:
+        200:
+          description: "Successful response."
+        400:
+          description: "Invalid request or validation error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized.
+    post:
+      tags:
+        - Accounts
+      operationId: post_api_data_accounts
+      summary: "POST /api/data/accounts"
+      description: "Field locations are inferred from the raw route export: path params from {param}, GET fields as query params, write-route non-path fields as JSON body fields."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                data:
+                  type: string
+                teamId:
+                  type: number
+              required:
+                - name
+                - data
+                - teamId
+      responses:
+        200:
+          description: "Successful response."
+        400:
+          description: "Invalid request or validation error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized.
+  /api/data/accounts/{id}:
+    get:
+      tags:
+        - Accounts
+      operationId: get_api_data_accounts_id
+      summary: "GET /api/data/accounts/{id}"
+      description: "Returns a single record. Field locations are inferred from the raw route export: path params from {param}, GET fields as query params, write-route non-path fields as JSON body fields."
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        200:
+          description: "Successful response."
+        400:
+          description: "Invalid request or validation error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized.
+    patch:
+      tags:
+        - Accounts
+      operationId: patch_api_data_accounts_id
+      summary: "PATCH /api/data/accounts/{id}"
+      description: "Field locations are inferred from the raw route export: path params from {param}, GET fields as query params, write-route non-path fields as JSON body fields."
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                data:
+              required:
+                - name
+      responses:
+        200:
+          description: "Successful response."
+        400:
+          description: "Invalid request or validation error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized.
+    delete:
+      tags:
+        - Accounts
+      operationId: delete_api_data_accounts_id
+      summary: "DELETE /api/data/accounts/{id}"
+      description: "Field locations are inferred from the raw route export: path params from {param}, GET fields as query params, write-route non-path fields as JSON body fields."
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        200:
+          description: "Successful response."
+        400:
+          description: "Invalid request or validation error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized.
+  /api/data/users/{userId}/accounts:
+    get:
+      tags:
+        - Users
+      operationId: get_api_data_users_userId_accounts
+      summary: "GET /api/data/users/{userId}/accounts"
+      description: "Field locations are inferred from the raw route export: path params from {param}, GET fields as query params, write-route non-path fields as JSON body fields."
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        200:
+          description: "Successful response."
+        400:
+          description: "Invalid request or validation error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized.
+    post:
+      tags:
+        - Users
+      operationId: post_api_data_users_userId_accounts
+      summary: "POST /api/data/users/{userId}/accounts"
+      description: "Field locations are inferred from the raw route export: path params from {param}, GET fields as query params, write-route non-path fields as JSON body fields."
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id:
+                  type: number
+              required:
+                - id
+      responses:
+        200:
+          description: "Successful response."
+        400:
+          description: "Invalid request or validation error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized.
+  /api/data/team/{teamId}/accounts:
+    get:
+      tags:
+        - Teams
+      operationId: get_api_data_team_teamId_accounts
+      summary: "GET /api/data/team/{teamId}/accounts"
+      description: "Field locations are inferred from the raw route export: path params from {param}, GET fields as query params, write-route non-path fields as JSON body fields."
+      parameters:
+        - name: teamId
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        200:
+          description: "Successful response."
+        400:
+          description: "Invalid request or validation error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized.
+  /api/data/users:
+    get:
+      tags:
+        - Users
+      operationId: get_api_data_users
+      summary: "GET /api/data/users"
+      description: "Field locations are inferred from the raw route export: path params from {param}, GET fields as query params, write-route non-path fields as JSON body fields."
+      responses:
+        200:
+          description: "Successful response."
+        400:
+          description: "Invalid request or validation error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized.
+  /api/data/users/{userId}/contacts/{id}:
+    delete:
+      tags:
+        - Users
+      operationId: delete_api_data_users_userId_contacts_id
+      summary: "DELETE /api/data/users/{userId}/contacts/{id}"
+      description: "Field locations are inferred from the raw route export: path params from {param}, GET fields as query params, write-route non-path fields as JSON body fields."
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: number
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        200:
+          description: "Successful response."
+        400:
+          description: "Invalid request or validation error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized.
+  /api/data/users/{userId}/accounts/{id}:
+    delete:
+      tags:
+        - Users
+      operationId: delete_api_data_users_userId_accounts_id
+      summary: "DELETE /api/data/users/{userId}/accounts/{id}"
+      description: "Field locations are inferred from the raw route export: path params from {param}, GET fields as query params, write-route non-path fields as JSON body fields."
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: number
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        200:
+          description: "Successful response."
+        400:
+          description: "Invalid request or validation error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized.
+  /api/data/who:
+    get:
+      tags:
+        - Who
+      operationId: get_api_data_who
+      summary: "GET /api/data/who"
+      description: "Field locations are inferred from the raw route export: path params from {param}, GET fields as query params, write-route non-path fields as JSON body fields."
+      responses:
+        200:
+          description: "Successful response."
+        400:
+          description: "Invalid request or validation error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized.
+  /api/data/teams:
+    get:
+      tags:
+        - Teams
+      operationId: get_api_data_teams
+      summary: "GET /api/data/teams"
+      description: "Field locations are inferred from the raw route export: path params from {param}, GET fields as query params, write-route non-path fields as JSON body fields."
+      responses:
+        200:
+          description: "Successful response."
+        400:
+          description: "Invalid request or validation error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized.
+  /api/data/teams/{id}:
+    delete:
+      tags:
+        - Teams
+      operationId: delete_api_data_teams_id
+      summary: "DELETE /api/data/teams/{id}"
+      description: "Field locations are inferred from the raw route export: path params from {param}, GET fields as query params, write-route non-path fields as JSON body fields."
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: "Successful response."
+        400:
+          description: "Invalid request or validation error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized.
+  /api/data/teams/users:
+    get:
+      tags:
+        - Teams
+      operationId: get_api_data_teams_users
+      summary: "GET /api/data/teams/users"
+      description: "Field locations are inferred from the raw route export: path params from {param}, GET fields as query params, write-route non-path fields as JSON body fields."
+      responses:
+        200:
+          description: "Successful response."
+        400:
+          description: "Invalid request or validation error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized.
+  /api/data/teams/{id}/users:
+    post:
+      tags:
+        - Teams
+      operationId: post_api_data_teams_id_users
+      summary: "POST /api/data/teams/{id}/users"
+      description: "Allows cross-user access; use only when explicitly authorized. Field locations are inferred from the raw route export: path params from {param}, GET fields as query params, write-route non-path fields as JSON body fields."
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userId:
+                  type: number
+              required:
+                - userId
+      responses:
+        200:
+          description: "Successful response."
+        400:
+          description: "Invalid request or validation error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized.
+  /api/data/teams/{id}/users/{userId}:
+    delete:
+      tags:
+        - Teams
+      operationId: delete_api_data_teams_id_users_userId
+      summary: "DELETE /api/data/teams/{id}/users/{userId}"
+      description: "Allows cross-user access; use only when explicitly authorized. Field locations are inferred from the raw route export: path params from {param}, GET fields as query params, write-route non-path fields as JSON body fields."
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        200:
+          description: "Successful response."
+        400:
+          description: "Invalid request or validation error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized.
+  /api/data/schema:
+    get:
+      tags:
+        - Schema
+      operationId: get_api_data_schema
+      summary: "GET /api/data/schema"
+      description: "Field locations are inferred from the raw route export: path params from {param}, GET fields as query params, write-route non-path fields as JSON body fields."
+      responses:
+        200:
+          description: "Successful response."
+        400:
+          description: "Invalid request or validation error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized.
+    patch:
+      tags:
+        - Schema
+      operationId: patch_api_data_schema
+      summary: "PATCH /api/data/schema"
+      description: "Field locations are inferred from the raw route export: path params from {param}, GET fields as query params, write-route non-path fields as JSON body fields."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                schema:
+                  type: string
+              required:
+                - name
+                - schema
+      responses:
+        200:
+          description: "Successful response."
+        400:
+          description: "Invalid request or validation error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized.
+  /api/data/news:
+    get:
+      tags:
+        - News
+      operationId: get_api_data_news
+      summary: "GET /api/data/news"
+      description: "Field locations are inferred from the raw route export: path params from {param}, GET fields as query params, write-route non-path fields as JSON body fields."
+      responses:
+        200:
+          description: "Successful response."
+        400:
+          description: "Invalid request or validation error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized.
+    post:
+      tags:
+        - News
+      operationId: post_api_data_news
+      summary: "POST /api/data/news"
+      description: "Field locations are inferred from the raw route export: path params from {param}, GET fields as query params, write-route non-path fields as JSON body fields."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                content:
+                  type: string
+                entityType:
+                  type: string
+                entityId:
+                  type: number
+                url:
+                  type: string
+                user:
+                  type: string
+              required:
+                - content
+                - entityType
+                - entityId
+                - url
+                - user
+      responses:
+        200:
+          description: "Successful response."
+        400:
+          description: "Invalid request or validation error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized.
+  /api/data/chat/sessions:
+    get:
+      tags:
+        - Chat
+      operationId: get_api_data_chat_sessions
+      summary: "GET /api/data/chat/sessions"
+      description: "Field locations are inferred from the raw route export: path params from {param}, GET fields as query params, write-route non-path fields as JSON body fields."
+      responses:
+        200:
+          description: "Successful response."
+        400:
+          description: "Invalid request or validation error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized.
+    post:
+      tags:
+        - Chat
+      operationId: post_api_data_chat_sessions
+      summary: "POST /api/data/chat/sessions"
+      description: "Field locations are inferred from the raw route export: path params from {param}, GET fields as query params, write-route non-path fields as JSON body fields."
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                isActive:
+      responses:
+        200:
+          description: "Successful response."
+        400:
+          description: "Invalid request or validation error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized.
+  /api/data/chat/sessions/active:
+    get:
+      tags:
+        - Chat
+      operationId: get_api_data_chat_sessions_active
+      summary: "GET /api/data/chat/sessions/active"
+      description: "Field locations are inferred from the raw route export: path params from {param}, GET fields as query params, write-route non-path fields as JSON body fields."
+      responses:
+        200:
+          description: "Successful response."
+        400:
+          description: "Invalid request or validation error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized.
+  /api/data/chat/sessions/active/ensure:
+    get:
+      tags:
+        - Chat
+      operationId: get_api_data_chat_sessions_active_ensure
+      summary: "GET /api/data/chat/sessions/active/ensure"
+      description: "Field locations are inferred from the raw route export: path params from {param}, GET fields as query params, write-route non-path fields as JSON body fields."
+      responses:
+        200:
+          description: "Successful response."
+        400:
+          description: "Invalid request or validation error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized.
+  /api/data/chat/sessions/{id}:
+    get:
+      tags:
+        - Chat
+      operationId: get_api_data_chat_sessions_id
+      summary: "GET /api/data/chat/sessions/{id}"
+      description: "Field locations are inferred from the raw route export: path params from {param}, GET fields as query params, write-route non-path fields as JSON body fields."
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        200:
+          description: "Successful response."
+        400:
+          description: "Invalid request or validation error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized.
+    put:
+      tags:
+        - Chat
+      operationId: put_api_data_chat_sessions_id
+      summary: "PUT /api/data/chat/sessions/{id}"
+      description: "Field locations are inferred from the raw route export: path params from {param}, GET fields as query params, write-route non-path fields as JSON body fields."
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+              required:
+                - title
+      responses:
+        200:
+          description: "Successful response."
+        400:
+          description: "Invalid request or validation error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized.
+    delete:
+      tags:
+        - Chat
+      operationId: delete_api_data_chat_sessions_id
+      summary: "DELETE /api/data/chat/sessions/{id}"
+      description: "Field locations are inferred from the raw route export: path params from {param}, GET fields as query params, write-route non-path fields as JSON body fields."
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        200:
+          description: "Successful response."
+        400:
+          description: "Invalid request or validation error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized.
+  /api/data/chat/sessions/{id}/active:
+    patch:
+      tags:
+        - Chat
+      operationId: patch_api_data_chat_sessions_id_active
+      summary: "PATCH /api/data/chat/sessions/{id}/active"
+      description: "Field locations are inferred from the raw route export: path params from {param}, GET fields as query params, write-route non-path fields as JSON body fields."
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        200:
+          description: "Successful response."
+        400:
+          description: "Invalid request or validation error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized.
+  /api/data/chat/sessions/{chatSessionId}/messages:
+    get:
+      tags:
+        - Chat
+      operationId: get_api_data_chat_sessions_chatSessionId_messages
+      summary: "GET /api/data/chat/sessions/{chatSessionId}/messages"
+      description: "Field locations are inferred from the raw route export: path params from {param}, GET fields as query params, write-route non-path fields as JSON body fields."
+      parameters:
+        - name: chatSessionId
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        200:
+          description: "Successful response."
+        400:
+          description: "Invalid request or validation error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized.
+    delete:
+      tags:
+        - Chat
+      operationId: delete_api_data_chat_sessions_chatSessionId_messages
+      summary: "DELETE /api/data/chat/sessions/{chatSessionId}/messages"
+      description: "Field locations are inferred from the raw route export: path params from {param}, GET fields as query params, write-route non-path fields as JSON body fields."
+      parameters:
+        - name: chatSessionId
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        200:
+          description: "Successful response."
+        400:
+          description: "Invalid request or validation error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized.
+  /api/data/chat/sessions/{chatSessionId}/messages/llm:
+    get:
+      tags:
+        - Chat
+      operationId: get_api_data_chat_sessions_chatSessionId_messages_llm
+      summary: "GET /api/data/chat/sessions/{chatSessionId}/messages/llm"
+      description: "Field locations are inferred from the raw route export: path params from {param}, GET fields as query params, write-route non-path fields as JSON body fields."
+      parameters:
+        - name: chatSessionId
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        200:
+          description: "Successful response."
+        400:
+          description: "Invalid request or validation error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized.
+  /api/data/chat/sessions/{chatSessionId}/messages/batch:
+    post:
+      tags:
+        - Chat
+      operationId: post_api_data_chat_sessions_chatSessionId_messages_batch
+      summary: "POST /api/data/chat/sessions/{chatSessionId}/messages/batch"
+      description: "Field locations are inferred from the raw route export: path params from {param}, GET fields as query params, write-route non-path fields as JSON body fields."
+      parameters:
+        - name: chatSessionId
+          in: path
+          required: true
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                messages:
+                  type: string
+              required:
+                - messages
+      responses:
+        200:
+          description: "Successful response."
+        400:
+          description: "Invalid request or validation error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized.
+  /api/data/chat/sessions/{chatSessionId}/messages/{messageId}:
+    delete:
+      tags:
+        - Chat
+      operationId: delete_api_data_chat_sessions_chatSessionId_messages_messageId
+      summary: "DELETE /api/data/chat/sessions/{chatSessionId}/messages/{messageId}"
+      description: "Field locations are inferred from the raw route export: path params from {param}, GET fields as query params, write-route non-path fields as JSON body fields."
+      parameters:
+        - name: chatSessionId
+          in: path
+          required: true
+          schema:
+            type: number
+        - name: messageId
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        200:
+          description: "Successful response."
+        400:
+          description: "Invalid request or validation error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized.
+    patch:
+      tags:
+        - Chat
+      operationId: patch_api_data_chat_sessions_chatSessionId_messages_messageId
+      summary: "PATCH /api/data/chat/sessions/{chatSessionId}/messages/{messageId}"
+      description: "Field locations are inferred from the raw route export: path params from {param}, GET fields as query params, write-route non-path fields as JSON body fields."
+      parameters:
+        - name: chatSessionId
+          in: path
+          required: true
+          schema:
+            type: number
+        - name: messageId
+          in: path
+          required: true
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                content:
+                  type: string
+              required:
+                - content
+      responses:
+        200:
+          description: "Successful response."
+        400:
+          description: "Invalid request or validation error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized.
+  /api/data/chat/sessions/{chatSessionId}/messages/{messageId}/clear-tool-calls:
+    patch:
+      tags:
+        - Chat
+      operationId: patch_api_data_chat_sessions_chatSessionId_messages_messageId_clear_tool_calls
+      summary: "PATCH /api/data/chat/sessions/{chatSessionId}/messages/{messageId}/clear-tool-calls"
+      description: "Field locations are inferred from the raw route export: path params from {param}, GET fields as query params, write-route non-path fields as JSON body fields."
+      parameters:
+        - name: chatSessionId
+          in: path
+          required: true
+          schema:
+            type: number
+        - name: messageId
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        200:
+          description: "Successful response."
+        400:
+          description: "Invalid request or validation error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized.
+  /api/data/chat/sessions/{chatSessionId}/messages/by-ids:
+    delete:
+      tags:
+        - Chat
+      operationId: delete_api_data_chat_sessions_chatSessionId_messages_by_ids
+      summary: "DELETE /api/data/chat/sessions/{chatSessionId}/messages/by-ids"
+      description: "Field locations are inferred from the raw route export: path params from {param}, GET fields as query params, write-route non-path fields as JSON body fields."
+      parameters:
+        - name: chatSessionId
+          in: path
+          required: true
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                messageIds:
+                  type: array
+                  items:
+                    type: string
+              required:
+                - messageIds
+      responses:
+        200:
+          description: "Successful response."
+        400:
+          description: "Invalid request or validation error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized.
+  /api/data/prompts:
+    get:
+      tags:
+        - Prompts
+      operationId: get_api_data_prompts
+      summary: "GET /api/data/prompts"
+      description: "Field locations are inferred from the raw route export: path params from {param}, GET fields as query params, write-route non-path fields as JSON body fields."
+      parameters:
+        - name: category
+          in: query
+          required: false
+          schema:
+        - name: favoritesOnly
+          in: query
+          required: false
+          schema:
+        - name: searchTerm
+          in: query
+          required: false
+          schema:
+      responses:
+        200:
+          description: "Successful response."
+        400:
+          description: "Invalid request or validation error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized.
+    post:
+      tags:
+        - Prompts
+      operationId: post_api_data_prompts
+      summary: "POST /api/data/prompts"
+      description: "Field locations are inferred from the raw route export: path params from {param}, GET fields as query params, write-route non-path fields as JSON body fields."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                promptContent:
+                  type: string
+              required:
+                - promptContent
+      responses:
+        200:
+          description: "Successful response."
+        400:
+          description: "Invalid request or validation error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized.
+  /api/data/prompts/{id}:
+    get:
+      tags:
+        - Prompts
+      operationId: get_api_data_prompts_id
+      summary: "GET /api/data/prompts/{id}"
+      description: "Field locations are inferred from the raw route export: path params from {param}, GET fields as query params, write-route non-path fields as JSON body fields."
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        200:
+          description: "Successful response."
+        400:
+          description: "Invalid request or validation error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized.
+    put:
+      tags:
+        - Prompts
+      operationId: put_api_data_prompts_id
+      summary: "PUT /api/data/prompts/{id}"
+      description: "Field locations are inferred from the raw route export: path params from {param}, GET fields as query params, write-route non-path fields as JSON body fields."
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                description:
+                promptContent:
+                category:
+                tags:
+                isFavorite:
+      responses:
+        200:
+          description: "Successful response."
+        400:
+          description: "Invalid request or validation error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized.
+    delete:
+      tags:
+        - Prompts
+      operationId: delete_api_data_prompts_id
+      summary: "DELETE /api/data/prompts/{id}"
+      description: "Field locations are inferred from the raw route export: path params from {param}, GET fields as query params, write-route non-path fields as JSON body fields."
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        200:
+          description: "Successful response."
+        400:
+          description: "Invalid request or validation error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized.
+  /api/data/prompts/{id}/use:
+    post:
+      tags:
+        - Prompts
+      operationId: post_api_data_prompts_id_use
+      summary: "POST /api/data/prompts/{id}/use"
+      description: "Field locations are inferred from the raw route export: path params from {param}, GET fields as query params, write-route non-path fields as JSON body fields."
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        200:
+          description: "Successful response."
+        400:
+          description: "Invalid request or validation error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized.
+  /api/data/kanban:
+    get:
+      tags:
+        - Kanban
+      operationId: get_api_data_kanban
+      summary: "GET /api/data/kanban"
+      description: "Field locations are inferred from the raw route export: path params from {param}, GET fields as query params, write-route non-path fields as JSON body fields."
+      responses:
+        200:
+          description: "Successful response."
+        400:
+          description: "Invalid request or validation error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized.
+    post:
+      tags:
+        - Kanban
+      operationId: post_api_data_kanban
+      summary: "POST /api/data/kanban"
+      description: "Returns a single record. Field locations are inferred from the raw route export: path params from {param}, GET fields as query params, write-route non-path fields as JSON body fields."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                schemaId:
+                  type: number
+                name:
+                  type: string
+                config:
+                  type: string
+              required:
+                - schemaId
+                - name
+                - config
+      responses:
+        200:
+          description: "Successful response."
+        400:
+          description: "Invalid request or validation error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized.
+  /api/data/kanban/{id}:
+    get:
+      tags:
+        - Kanban
+      operationId: get_api_data_kanban_id
+      summary: "GET /api/data/kanban/{id}"
+      description: "Returns a single record. Field locations are inferred from the raw route export: path params from {param}, GET fields as query params, write-route non-path fields as JSON body fields."
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        200:
+          description: "Successful response."
+        400:
+          description: "Invalid request or validation error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized.
+    patch:
+      tags:
+        - Kanban
+      operationId: patch_api_data_kanban_id
+      summary: "PATCH /api/data/kanban/{id}"
+      description: "Returns a single record. Field locations are inferred from the raw route export: path params from {param}, GET fields as query params, write-route non-path fields as JSON body fields."
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                config:
+      responses:
+        200:
+          description: "Successful response."
+        400:
+          description: "Invalid request or validation error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized.
+    delete:
+      tags:
+        - Kanban
+      operationId: delete_api_data_kanban_id
+      summary: "DELETE /api/data/kanban/{id}"
+      description: "Field locations are inferred from the raw route export: path params from {param}, GET fields as query params, write-route non-path fields as JSON body fields."
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        200:
+          description: "Successful response."
+        400:
+          description: "Invalid request or validation error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized.
+  /api/data/kanban/schema/{schemaId}:
+    get:
+      tags:
+        - Kanban
+      operationId: get_api_data_kanban_schema_schemaId
+      summary: "GET /api/data/kanban/schema/{schemaId}"
+      description: "Field locations are inferred from the raw route export: path params from {param}, GET fields as query params, write-route non-path fields as JSON body fields."
+      parameters:
+        - name: schemaId
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        200:
+          description: "Successful response."
+        400:
+          description: "Invalid request or validation error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized.
