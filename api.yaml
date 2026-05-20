@@ -25,6 +25,86 @@ components:
         error:
           type: string
 paths:
+  /api/data/actions:
+    get:
+      tags:
+        - Actions
+      operationId: get_api_data_actions
+      summary: "GET /api/data/actions"
+      description: "Reads actions filtered by date, account ID, contact ID, or supported combinations."
+      parameters:
+        - name: date
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+        - name: accountId
+          in: query
+          required: false
+          schema:
+            type:
+              - integer
+              - "null"
+        - name: contactId
+          in: query
+          required: false
+          schema:
+            type:
+              - integer
+              - "null"
+      responses:
+        200:
+          description: "Successful response."
+        400:
+          description: "Invalid request or validation error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized.
+    post:
+      tags:
+        - Actions
+      operationId: post_api_data_actions
+      summary: "POST /api/data/actions"
+      description: "Posts an accumulated action for an account or contact."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                accountId:
+                  type:
+                    - integer
+                    - "null"
+                contactId:
+                  type:
+                    - integer
+                    - "null"
+                date:
+                  type: string
+                  format: date
+                action:
+                  type: string
+                  minLength: 1
+              required:
+                - date
+                - action
+      responses:
+        200:
+          description: "Successful response."
+        400:
+          description: "Invalid request or validation error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized.
   /api/data/contacts:
     get:
       tags:
