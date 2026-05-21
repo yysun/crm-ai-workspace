@@ -25,13 +25,91 @@ components:
         error:
           type: string
 paths:
+  /api/data/inbox:
+    post:
+      tags:
+        - Inbox
+      operationId: post_api_data_inbox
+      summary: "POST /api/data/inbox"
+      description: "Upserts a checkbox-level inbox work item from an accumulated-action report using a stable actionKey. This route writes the Inbox table, not the Actions table."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                teamId:
+                  type: integer
+                accountId:
+                  type:
+                    - integer
+                    - "null"
+                  default: null
+                contactId:
+                  type:
+                    - integer
+                    - "null"
+                  default: null
+                sourceDate:
+                  type: string
+                  format: date
+                actionText:
+                  type: string
+                  minLength: 1
+                status:
+                  type: string
+                  default: open
+                firstSeenDate:
+                  type:
+                    - string
+                    - "null"
+                  format: date
+                  default: null
+                lastSeenDate:
+                  type:
+                    - string
+                    - "null"
+                  format: date
+                  default: null
+                sourcePath:
+                  type: string
+                  minLength: 1
+                  maxLength: 1024
+                sourceMarkdownSection:
+                  type: string
+                  minLength: 1
+                  maxLength: 512
+                actionKey:
+                  type: string
+                  minLength: 1
+                  maxLength: 256
+              required:
+                - teamId
+                - sourceDate
+                - actionText
+                - sourcePath
+                - sourceMarkdownSection
+                - actionKey
+      responses:
+        200:
+          description: "Successful response."
+        400:
+          description: "Invalid request or validation error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        401:
+          description: Unauthorized.
   /api/data/actions:
     get:
       tags:
         - Actions
       operationId: get_api_data_actions
       summary: "GET /api/data/actions"
-      description: "Reads actions filtered by date, account ID, contact ID, or supported combinations."
+      description: "Reads accumulated action snapshot rows from the Actions table, filtered by date, account ID, contact ID, or supported combinations."
       parameters:
         - name: date
           in: query
@@ -69,7 +147,7 @@ paths:
         - Actions
       operationId: post_api_data_actions
       summary: "POST /api/data/actions"
-      description: "Posts an accumulated action for an account or contact."
+      description: "Posts an accumulated daily action markdown snapshot to the Actions table. This route is for action report snapshots, not checkbox-level inbox items."
       requestBody:
         required: true
         content:

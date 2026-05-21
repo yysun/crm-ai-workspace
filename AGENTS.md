@@ -47,7 +47,7 @@ Large distillation runs must use the compliant agent-authored batch pattern:
 
 Durable knowledge belongs in `data/`. Behavior rules belong in `process/`. Dynamic operator work such as briefings, reports, and analyses belongs in `my-work/{yyyy}/{mm}/{dd}/`, except daily triage which belongs in `my-work/daily-triage/{yyyy}/{mm}/{dd}/`. Generated operator deliverables for that work belong in the matching dated `output/` folder under the selected work path.
 
-External write boundary: this workspace does not perform CRM writes. Local summaries, checkboxes, reports, decks, and proposed actions are planning artifacts only. Read-only API calls may fetch CRM records or notes for lookup and inspection; they do not create, update, or delete CRM data.
+External write boundary: this workspace does not write CRM account, contact, or note records. Local summaries, checkboxes, reports, decks, and proposed actions are planning artifacts unless the user explicitly asks to publish action artifacts. The only permitted CRM write scripts are `scripts/post-accumulated-actions.js` for the `Actions` table through `POST /api/data/actions` and `scripts/post-inbox.js` for the `Inbox` table through `POST /api/data/inbox`. Both scripts must require their explicit write-enable environment variable and support dry-run validation. Do not use the actions-table script for inbox rows, and do not use the inbox script for accumulated markdown snapshots.
 
 Validation expectation: do not claim a workflow is validated unless the relevant event path has been checked against its handler, expected `data/` reads or writes, expected `my-work/` artifacts, and any required export result.
 
@@ -61,6 +61,8 @@ Validation expectation: do not claim a workflow is validated unless the relevant
 - `scripts/load-distillation-batch.js`: read-only batch loader for agent-authored distillation. It lists source and summary paths plus object metadata; it must not write `summary.md`.
 - `scripts/build-data-index.js`: rebuilds deterministic routing indexes under `data/index/` from raw local exports and generated layer files.
 - `scripts/build-accumulated-actions.js`: creates deterministic team-scoped dated accumulated-action queue snapshots and removed-action files under `data/{teamId}/daily-triage/{yyyy}/{mm}/{dd}/` from in-place `summary.md` artifacts, including added, carried, and removed actions from `## Proposed Actions`. Snapshot action rows expose business fields such as team ID, account/contact identity, action text, first/last seen dates, source date, and latest summary path; internal normalized action keys, stale summary paths, and status fields are not output fields.
+- `scripts/post-accumulated-actions.js`: gated CRM write helper for publishing one accumulated daily markdown report per team/date to the CRM `Actions` table through `POST /api/data/actions`. This is for snapshot/audit text only, not inbox work items. It requires `AIW_ENABLE_CRM_ACTION_POST=1` unless `--dry-run` is used.
+- `scripts/post-inbox.js`: gated CRM write helper for upserting checkbox-level inbox work items to the CRM `Inbox` table through `POST /api/data/inbox`. It parses account/contact checkbox actions from `actions-{yyyy-mm-dd}.md`, derives `actionKey`, and requires `AIW_ENABLE_CRM_INBOX_POST=1` unless `--dry-run` is used.
 - `scripts/distillation-find-refresh-targets.js`: audits dated `source.md` and `summary.md` coverage for missing summaries, missing `## Evidence`, stale generic phrasing, and expired summaries.
 - `scripts/distillation-validate-outputs.js`: validates dated `summary.md` artifacts for required frontmatter, required sections, evidence-traceability bullets, and source-file existence.
 - `api.yaml`: read-only API contract reference for CRM account, contact, and note endpoints used by helper scripts. Do not infer undocumented API behavior when this contract is missing a route.
@@ -142,6 +144,13 @@ The `{teamId}` is the workspace team folder ID; CRM team `-1` uses `0`. The defa
 When rebuilding from a `{start-date}`, the script should seed from the latest existing accumulated snapshot before `{start-date}` and recalculate `{start-date}` forward. It should start blank only when no earlier base snapshot exists. Do not use the same-day snapshot as the base for a rebuild from that day, because that would hide same-day action additions or removals.
 
 Also run accumulated-action calculation when the user asks for `accumulated actions`, `rebuild action queue`, `refresh action queue`, `recalculate triage`, `build daily triage state`, `update accumulated queue`, `backfill action queue`, `as-of triage state`, or equivalent wording.
+
+Publishing accumulated actions and inbox items:
+
+- `scripts/post-accumulated-actions.js` posts accumulated daily markdown snapshots to the CRM `Actions` table only. Use it when the user asks to post accumulated action reports, action markdown, or daily action snapshots. For team-scoped daily reports, use `--team-file`; `data/0/...` maps to API team `8` in this snapshot route when that API expects the CRM team identifier. This script is not for inbox upserts.
+- `scripts/post-inbox.js` posts checkbox-level work items to the CRM `Inbox` table only. Use it when the user asks to upsert inbox items, publish inbox work, or send checkbox actions to the inbox. The default date is today; `--date=YYYY-MM-DD` selects another daily triage date across all available team files. For inbox rows, map workspace team `0` or CRM team `-1` to API team `8`.
+- Do not confuse the two destinations: accumulated markdown snapshots belong in `Actions`; normalized checkbox work items with `actionKey` belong in `Inbox`.
+- Both posting scripts must be dry-run first when payload shape or route behavior changed. Actual writes require the script-specific environment gate: `AIW_ENABLE_CRM_ACTION_POST=1` for `Actions`, `AIW_ENABLE_CRM_INBOX_POST=1` for `Inbox`.
 
 Do not invent facts when source coverage is missing. Report the missing local source coverage and, when possible, name the script or export needed to create it.
 
