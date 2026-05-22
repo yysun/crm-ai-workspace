@@ -67,6 +67,7 @@ Validation expectation: do not claim a workflow is validated unless the relevant
 - `scripts/distillation-validate-outputs.js`: validates dated `summary.md` artifacts for required frontmatter, required sections, evidence-traceability bullets, and source-file existence.
 - `api.yaml`: read-only API contract reference for CRM account, contact, and note endpoints used by helper scripts. Do not infer undocumented API behavior when this contract is missing a route.
 - `process/accumulated-actions.md`: deterministic accumulated-action queue snapshot process, including trigger phrases, base snapshot rules, JSON shape, and removal logic.
+- `process/daily-process.md`: full daily publish-run contract for the operator phrase `download data, distill today, post actions and post inbox`; coordinates refresh, agent-authored distillation, accumulated-action rebuild, dry-run validation, and gated posting without scripting the judgment layer.
 - `process/daily-triage.md`: workflow for action-driven daily attention briefings with a required three-file Marp/PDF export pattern: executive summary, what's new today, and full references. The executive summary carries decision intelligence and the action map, what's new today isolates same-day adds/carries/removals, and full references carries the complete action traceback list.
 - `process/source.md`: evidence-layer contract for generated CRM source snapshots.
 - `process/distillation.md`: orchestration workflow from `source.md` to `summary.md`.
