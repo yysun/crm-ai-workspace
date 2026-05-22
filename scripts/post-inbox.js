@@ -104,6 +104,7 @@ Options:
   --status VALUE      Status for unchecked actions. Default: open.
   --strict-missing-team-link
                       Stop when account/contact validation fails for the mapped team. Default: skip and continue.
+  --continue-on-error Continue after non-duplicate, non-team-link POST failures and report failed rows.
   --dry-run           Parse and print payloads without posting.
   --progress-every N  Print progress every N posted payloads. Default: 25.
   --quiet             Print only final counts.
@@ -124,6 +125,7 @@ function parseArgs(argv) {
     includeChecked: false,
     status: 'open',
     skipMissingTeamLink: true,
+    continueOnError: false,
     dryRun: false,
     json: false,
     quiet: false,
@@ -160,6 +162,10 @@ function parseArgs(argv) {
     }
     if (part === '--strict-missing-team-link') {
       args.skipMissingTeamLink = false;
+      continue;
+    }
+    if (part === '--continue-on-error') {
+      args.continueOnError = true;
       continue;
     }
     if (part === '--file') {
@@ -584,6 +590,7 @@ async function postInboxItems(baseUrl, token, payloads, args) {
   const results = [];
   const skippedDuplicates = [];
   const skippedMissingTeamLinks = [];
+  const failed = [];
   for (let index = 0; index < payloads.length; index += 1) {
     const item = payloads[index];
     let result;
@@ -611,6 +618,14 @@ async function postInboxItems(baseUrl, token, payloads, args) {
           sourceDate: item.payload.sourceDate,
           actionKey: item.payload.actionKey,
         };
+        if (args.continueOnError) {
+          failed.push({
+            ...detail,
+            error: error.message || String(error),
+          });
+          printProgress('Processed inbox items', index + 1, payloads.length, args);
+          continue;
+        }
         throw new Error(`${error.message || error}\nFailed inbox payload: ${JSON.stringify(detail)}`);
       }
     }
@@ -626,7 +641,7 @@ async function postInboxItems(baseUrl, token, payloads, args) {
     }
     printProgress('Processed inbox items', index + 1, payloads.length, args);
   }
-  return { results, skippedDuplicates, skippedMissingTeamLinks };
+  return { results, skippedDuplicates, skippedMissingTeamLinks, failed };
 }
 
 function summarizePayload(payload) {
@@ -681,7 +696,7 @@ async function main() {
   requireWriteEnabled();
   const baseUrl = getRequiredEnv('CRM_BASE_URL');
   const token = getRequiredEnv('CRM_ACCESS_TOKEN');
-  const { results, skippedDuplicates, skippedMissingTeamLinks } = await postInboxItems(baseUrl, token, payloads, args);
+  const { results, skippedDuplicates, skippedMissingTeamLinks, failed } = await postInboxItems(baseUrl, token, payloads, args);
 
   if (args.json) {
     console.log(JSON.stringify({
@@ -690,17 +705,29 @@ async function main() {
       posted: results.length,
       skipped_duplicates: skippedDuplicates.length,
       skipped_missing_team_links: skippedMissingTeamLinks.length,
+      failed: failed.length,
       results: results.map((result) => ({
         ...result,
         inputPath: toRelativePath(result.inputPath),
       })),
+      failed_items: failed,
     }, null, 2));
+    if (failed.length > 0) {
+      process.exitCode = 1;
+    }
     return;
   }
 
   console.log(`Posted ${results.length} inbox payloads to ${postRoutePath}.`);
   console.log(`Skipped ${skippedDuplicates.length} duplicate inbox payloads.`);
   console.log(`Skipped ${skippedMissingTeamLinks.length} inbox payloads after team validation failures.`);
+  console.log(`Failed ${failed.length} inbox payloads.`);
+  if (failed.length > 0) {
+    for (const item of failed) {
+      console.log(`- failed index ${item.index}/${item.total}: team:${item.teamId} ${item.accountId ? `account:${item.accountId}` : `contact:${item.contactId}`} ${item.sourceDate} ${item.error}`);
+    }
+    process.exitCode = 1;
+  }
 }
 
 main().catch((error) => {

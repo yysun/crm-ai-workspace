@@ -132,6 +132,8 @@ node scripts/build-data-index.js
 
 Distillation and daily triage briefing are AI-agent workflows. Do not use scripts to create `summary.md`, daily triage briefs, Marp files, or PDFs. Scripts may load or list source batches for an agent to process, and may create deterministic accumulated-action queue snapshots from existing local `summary.md` artifacts.
 
+When the user says `distill` or `distill today` without a different date range, distill only the current local date by default. After refresh, audit with `scripts/distillation-find-refresh-targets.js --from={yyyy-mm-dd} --to={yyyy-mm-dd}` for that date. Do not expand a bare `distill` request to the full missing/stale backlog. Use the full backlog only when the user explicitly asks for all missing summaries, all stale summaries, a full backlog, or a wider date range.
+
 For large distillation runs, follow the fixed-manifest parallel-agent protocol from the Workspace Contract. Parent agents own orchestration, progress notes, final validation, accumulated-action rebuilds, and index rebuilds. Worker agents own only their assigned `*-summary.md` files. This separation is part of the evidence boundary: deterministic scripts may organize work and derived state, but judgment text must be written by agents from the current `*-source.md` files.
 
 Run accumulated-action calculation automatically once at the end of a distillation run, after all requested accounts and contacts have been distilled, if any account/contact created, updated, or deleted `## Proposed Actions` inside a dated `*-summary.md` artifact. Do not rebuild the queue after each individual account/contact inside the same batch. Track the earliest changed summary snapshot date and latest required as-of date, then run one rebuild:

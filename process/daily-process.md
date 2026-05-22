@@ -50,12 +50,15 @@ Distillation must be performed by agents from current `*-source.md` files under 
 
 Default as-of date is the current local date in the workspace timezone.
 
-For `distill today`, interpret `today` as the current run scope after refresh:
+For bare `distill` or `distill today`, interpret the distillation scope as the as-of date only after refresh. Do not expand the run to the full missing/stale backlog unless the user explicitly asks for a backlog, full refresh, all missing summaries, all stale summaries, or a wider date range.
 
-- all missing, stale, expired, or structurally invalid summaries discovered by `scripts/distillation-find-refresh-targets.js`
-- unless the user explicitly limits the scope by team, date, object, or scenario
+Use date-scoped audit flags by default:
 
-Do not narrow the run to source folders whose source date equals today unless the user explicitly says `today only` or gives that date boundary.
+```text
+node scripts/distillation-find-refresh-targets.js --from={yyyy-mm-dd} --to={yyyy-mm-dd}
+```
+
+If the user gives a different date range, use that range. If the user gives a team, object, or scenario scope, combine that scope with the requested date range. Only omit `--from` and `--to` when the user explicitly asks for the full backlog or all missing/stale summaries.
 
 For posting, use the as-of date for accumulated-action files:
 
