@@ -118,6 +118,7 @@ Run the steps in this order:
     - For team `7`, accounts and contacts are commercial-program-first; for accounts, summarize brokerage context only as it affects commercial contact access, eligibility, or program fit.
 12. For contacts, anchor the person to the linked account when known, preserve the account relationship in memory, and keep commercial-program potential separate from brokerage classification unless team `7` makes the commercial-program lens primary.
 13. Do not move any fact or interpretation into `## Memory`, `## Tensions`, `## Insight`, or `## Proposed Actions` unless it can still be tied back to the traceability envelope established from the current source layer.
+    - If the current source evidence shows that the account or contact is inactive, closed, archived, completed, unaffiliated, or otherwise no longer active for franchise follow-up, update `## Memory` with that inactive state and the source-backed reason or uncertainty, then omit `## Tensions`, `## Insight`, and `## Proposed Actions` unless a separate active franchise consequence is explicitly supported. If a prior summary carried open actions, remove them by omitting `## Proposed Actions` and record the snapshot date for accumulated-action rebuild.
 14. Read `process/tension.md` and add `## Tensions` only when active pressure, contradiction, risk, or opportunity is supported.
 15. Read `process/insight.md` and add `## Insight` only when the current evidence supports a meaningful judgment.
 16. Read `process/action.md` and add `## Proposed Actions` only when actions follow from the current evidence and insight.
@@ -174,6 +175,8 @@ data/{teamId}/{yyyy}/{mm}/{dd}/contacts/{id}/contact-{id}-summary.md
 ## Action Queue Rule
 
 When supported actions exist, keep them in `## Proposed Actions` inside `summary.md` as Markdown checkboxes. When supported actions do not exist, omit `## Proposed Actions`. The accumulated-action script reads summaries directly and detects additions, carries, checked completions, removed actions, and summaries that no longer contain supported actions.
+
+When an account or contact becomes inactive, closed, archived, completed, unaffiliated, or otherwise no longer active for franchise follow-up, existing open actions are no longer supported by default. Omit `## Proposed Actions` in the refreshed summary unless the current source layer supports a separate active franchise consequence, and rebuild accumulated actions so the old rows are removed.
 
 ## Scenario Use
 

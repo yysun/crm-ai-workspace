@@ -119,7 +119,7 @@ Do not emit:
 
 `action_key` is internal matching state only. It is usually normalized `action_text`, so emitting both is redundant.
 
-Closed status is not an active state. It should remove the action.
+Closed, inactive, archived, completed, or otherwise inactive status is not an active state. It should remove the action.
 
 ## Removal Logic
 
@@ -131,6 +131,8 @@ An action is removed only when the accumulator sees one of these source-backed t
 - `closed-status`: a newer summary has closed-style frontmatter such as `closed`, `complete`, `completed`, `inactive`, or `archived`.
 - `no-supported-actions-in-summary`: a newer same-account/contact summary exists without `## Proposed Actions`.
 - `not-present-in-latest-action`: a newer same-account/contact summary has proposed actions, but the prior action text no longer appears as an open action.
+
+When distillation marks an account or contact inactive and omits `## Proposed Actions`, all prior open actions for that same account/contact should be removed through `closed-status` or `no-supported-actions-in-summary`, depending on the refreshed summary frontmatter and sections.
 
 Rows in `changes_on_date.removed` should include the prior action fields plus:
 

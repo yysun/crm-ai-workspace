@@ -30,6 +30,7 @@ Do not use chat history as source evidence unless it matches the generated sourc
 - Do not convert every recent event into memory.
 - Do not merge temporary recommendations into memory.
 - Do not store guesses about intent, relationship quality, or risk as memory without evidence.
+- When current source evidence shows that an account or contact has become inactive, closed, archived, completed, unaffiliated, or otherwise no longer active for franchise follow-up, record that state in memory with the source-backed reason or uncertainty so future runs know why active pressure and actions were retired.
 - Do not invent object IDs, relationship linkage, or time windows that are not visible in the current source layer.
 - Always identify why the memory matters to real estate franchising.
 - Use franchise lenses: recruiting/affiliation, retention/renewal, brokerage health, ownership/succession, territory dynamics, relationship influence, service value, compliance/legal dependency, competitive risk, growth opportunity.

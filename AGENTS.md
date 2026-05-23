@@ -226,6 +226,8 @@ When the task is distillation rather than fact gathering, start from the matchin
 
 Distillation is an AI-agent workflow, not a script workflow. Scripts may load or list batches, but the agent must follow `AGENTS.md` and the relevant `process/` files step by step when writing summaries.
 
+When current source evidence shows that an account or contact has become inactive, closed, archived, completed, unaffiliated, or otherwise no longer active for franchise follow-up, update `## Memory` with the inactive state and the source-backed reason or uncertainty. Do not create or carry forward `## Tensions`, `## Insight`, or `## Proposed Actions` for inactive accounts or contacts unless the current source evidence shows a separate active franchise consequence that still requires attention. Remove prior open actions by omitting `## Proposed Actions` from the refreshed `summary.md`, and record the affected snapshot date for accumulated-action rebuild. Inactive status should retire stale pressure, not manufacture new interpretation.
+
 When the request covers many objects, use the approved batch pattern:
 
 - Audit the scope first.

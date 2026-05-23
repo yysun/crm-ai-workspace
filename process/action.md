@@ -75,7 +75,7 @@ Bad action is generic, overreaching, disconnected from evidence, or silently tur
 
 TTL is controlled by `process/summary.md`.
 
-When `summary.md` is refreshed, keep supported actions in `## Proposed Actions`. If no supported actions remain after distillation, omit the section.
+When `summary.md` is refreshed, keep supported actions in `## Proposed Actions`. If no supported actions remain after distillation, omit the section. If the current source evidence shows that the account or contact is inactive, closed, archived, completed, unaffiliated, or otherwise no longer active for franchise follow-up, remove prior open actions by omitting `## Proposed Actions` unless a separate active franchise consequence is explicitly supported.
 
 ## Do Not Create Action When
 
@@ -85,10 +85,11 @@ When `summary.md` is refreshed, keep supported actions in `## Proposed Actions`.
 - The user asked only for facts and not for next moves.
 - The action does not support recruiting, retention, brokerage health, ownership stability, territory position, service value, compliance, competitive risk, or growth.
 - There is no supported action in the current distillation result.
+- The account or contact is inactive, closed, archived, completed, unaffiliated, or otherwise no longer active for franchise follow-up, unless current evidence supports a separate active franchise consequence.
 
 ## Accumulated Queue Rule
 
-After `## Proposed Actions` is created, updated, checked, removed, or materially changed inside `summary.md`, mark that snapshot date for deterministic accumulated-action rebuild. If multiple objects are being distilled in one run, do not rebuild after each object. Rebuild once after all requested objects are complete:
+After `## Proposed Actions` is created, updated, checked, removed, omitted because the account/contact became inactive, or materially changed inside `summary.md`, mark that snapshot date for deterministic accumulated-action rebuild. If multiple objects are being distilled in one run, do not rebuild after each object. Rebuild once after all requested objects are complete:
 
 ```text
 node scripts/build-accumulated-actions.js --team={teamId} --from={earliest-affected-date} --to={latest-required-date}

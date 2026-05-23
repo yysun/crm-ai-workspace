@@ -31,6 +31,7 @@ Do not use chat history as source evidence unless it matches the generated sourc
 - Keep durable patterns in `Memory`, active contradictions or pressure in `Tensions`, current business judgment in `Insight`, and next-move recommendations in `Proposed Actions`.
 - Keep proposed actions as local recommendations only. Do not present them as CRM tasks, notes, or writes.
 - Preserve checkbox state when refreshing the `Proposed Actions` section.
+- If current source evidence shows that the account or contact is inactive, closed, archived, completed, unaffiliated, or otherwise no longer active for franchise follow-up, update `Memory` with the inactive state and source-backed reason or uncertainty, then omit `Tensions`, `Insight`, and `Proposed Actions` unless a separate active franchise consequence is explicitly supported. Removing `Proposed Actions` is how prior open actions are retired from the accumulated queue.
 - Keep the summary franchise-specific: retention, recruiting, ownership transition, brokerage health, territory dynamics, service value, compliance, and competitive risk.
 - Apply the team objective before generic brand posture:
   - Team `0`: retention-first for Royal LePage accounts and contacts; add contact commercial-program opportunity only when supported.
@@ -138,6 +139,7 @@ Before calling `summary.md` valid, confirm:
 - `Tensions` is present only when supported by current evidence.
 - `Insight` is present only when supported by current evidence.
 - `Proposed Actions` is present only when supported actions exist.
+- Inactive accounts or contacts keep durable inactive-state memory but do not carry tension, insight, or proposed actions unless the current source layer supports a separate active franchise consequence.
 - Every material judgment is grounded in the same-run `source.md`.
 - Every material judgment remains traceable to a real source file, a real object, and a clear time window.
 - Proposed actions use Markdown checkboxes and remain local recommendations.

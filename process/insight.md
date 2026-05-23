@@ -79,3 +79,4 @@ TTL is controlled by `process/summary.md`.
 - The situation is already fully explained by the evidence layer.
 - The output would be generic advice that could apply to any account or contact.
 - The output does not change franchise decision-making.
+- The account or contact is inactive, closed, archived, completed, unaffiliated, or otherwise no longer active for franchise follow-up, unless the current source layer supports a separate active franchise consequence.
