@@ -9,6 +9,8 @@ import path from "node:path";
 import { spawnSync } from "node:child_process";
 
 const DEFAULT_OUTPUT_FILE = "growth-attrition.json";
+const POWERBI_WORKSPACE_ID = "ae712236-0ea3-4bfa-89d3-8404eee5a985";
+const POWERBI_DATASET_ID = "81e3109f-a6be-4c5b-a241-d5a3b08c0526";
 
 const DAX_QUERY = String.raw`// DAX Query
 DEFINE
@@ -140,11 +142,11 @@ function parseArgs(argv) {
 
 function printHelp() {
   console.log(`Usage:
-  node scripts/get-growth-attrition.js
-  node scripts/get-growth-attrition.js --output growth-attrition.json
+  node scripts/power-bi/get-growth-attrition.mjs
+  node scripts/power-bi/get-growth-attrition.mjs --output growth-attrition.json
 
 Environment:
-  Uses scripts/powerbi-tool.js, which reads POWERBI_* settings from project-root .env.
+  Uses scripts/power-bi/powerbi-tool.mjs for authentication. Workspace and dataset IDs are set in this script.
 `);
 }
 
@@ -153,10 +155,23 @@ function runPowerBiQuery(daxQuery) {
   const daxPath = path.join(tempDir, "growth-attrition.dax");
   writeFileSync(daxPath, daxQuery);
 
-  const result = spawnSync("node", ["scripts/powerbi-tool.js", "query", "--file", daxPath], {
-    encoding: "utf8",
-    maxBuffer: 50 * 1024 * 1024
-  });
+  const result = spawnSync(
+    "node",
+    [
+      "scripts/power-bi/powerbi-tool.mjs",
+      "query",
+      "--workspace-id",
+      POWERBI_WORKSPACE_ID,
+      "--dataset-id",
+      POWERBI_DATASET_ID,
+      "--file",
+      daxPath
+    ],
+    {
+      encoding: "utf8",
+      maxBuffer: 50 * 1024 * 1024
+    }
+  );
 
   if (result.error) {
     throw result.error;

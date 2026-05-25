@@ -37,6 +37,8 @@ temp/
 output/
 
 .wiki/
+.wiki-cn/
+
 data/
 
 my-work/

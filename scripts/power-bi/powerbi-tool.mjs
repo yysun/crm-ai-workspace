@@ -462,15 +462,15 @@ payload\t\tPrint the validated read request payload without calling Power BI.`);
 
 function printHelp() {
   console.log(`Usage:
-  node scripts/powerbi-tool.js list
-  node scripts/powerbi-tool.js workspaces
-  node scripts/powerbi-tool.js datasets [--workspace-id <id>]
-  node scripts/powerbi-tool.js dataset --dataset-id <id> [--workspace-id <id>]
-  node scripts/powerbi-tool.js tables --dataset-id <id> [--workspace-id <id>]
-  node scripts/powerbi-tool.js schema --dataset-id <id> [--workspace-id <id>]
-  node scripts/powerbi-tool.js query --dataset-id <id> --query "EVALUATE ..."
-  node scripts/powerbi-tool.js query --dataset-id <id> --file query.dax
-  node scripts/powerbi-tool.js payload <workspaces|datasets|dataset|tables|schema|query> [options]
+  node scripts/power-bi/powerbi-tool.mjs list
+  node scripts/power-bi/powerbi-tool.mjs workspaces
+  node scripts/power-bi/powerbi-tool.mjs datasets [--workspace-id <id>]
+  node scripts/power-bi/powerbi-tool.mjs dataset --dataset-id <id> [--workspace-id <id>]
+  node scripts/power-bi/powerbi-tool.mjs tables --dataset-id <id> [--workspace-id <id>]
+  node scripts/power-bi/powerbi-tool.mjs schema --dataset-id <id> [--workspace-id <id>]
+  node scripts/power-bi/powerbi-tool.mjs query --dataset-id <id> --query "EVALUATE ..."
+  node scripts/power-bi/powerbi-tool.mjs query --dataset-id <id> --file query.dax
+  node scripts/power-bi/powerbi-tool.mjs payload <workspaces|datasets|dataset|tables|schema|query> [options]
 
 Commands:
   list       Show commands.
