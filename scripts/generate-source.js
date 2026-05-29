@@ -1,4 +1,11 @@
 #!/usr/bin/env node
+/*
+ * Generates factual source.md snapshots from dated local CRM exports.
+ * Semantic helper labels in this file are script-derived evidence/candidates,
+ * not downstream franchise judgment. Recent change: brand output now separates
+ * Royal LePage name evidence from posture candidates so name absence does not
+ * become confirmed non-RLP prospecting posture.
+ */
 
 const fs = require('fs');
 const path = require('path');
@@ -135,7 +142,7 @@ function detectRoyalLePageName(value) {
   return /royal\s+lepage/i.test(String(value || ''));
 }
 
-function deriveBrandPosture(record, objectType, data, linkedAccount) {
+function deriveBrandClassification(record, objectType, data, linkedAccount) {
   const candidates = [
     record.name,
     record.accountName,
@@ -145,12 +152,21 @@ function deriveBrandPosture(record, objectType, data, linkedAccount) {
   ].filter(Boolean);
 
   if (candidates.some(detectRoyalLePageName)) {
-    return 'Royal LePage / retention';
+    return {
+      evidence: 'Royal LePage name detected',
+      postureCandidate: 'Royal LePage / retention context',
+    };
   }
   if (candidates.length > 0) {
-    return 'non Royal LePage / prospecting';
+    return {
+      evidence: 'no Royal LePage marker detected',
+      postureCandidate: 'non-RLP / needs confirmation',
+    };
   }
-  return 'unknown';
+  return {
+    evidence: 'unknown',
+    postureCandidate: 'unknown',
+  };
 }
 
 function deriveTeamObjective(teamId) {
@@ -242,12 +258,13 @@ function formatValue(value) {
 }
 
 function buildAccountSnapshot(context) {
-  const { record, data, relatedContacts, brandPosture, commercialPosture, noteStatus, teamObjective } = context;
+  const { record, data, relatedContacts, brandEvidence, brandPostureCandidate, commercialPosture, noteStatus, teamObjective } = context;
   const lines = [
     `- Primary object: ${formatValue(getRecordName(record, 'accounts', data))}, account ${record.id}.`,
     '- Object role: brokerage.',
     `- Team objective: ${teamObjective}.`,
-    `- Brand posture: ${brandPosture}.`,
+    `- Brand evidence: ${brandEvidence}.`,
+    `- Brand posture candidate: ${brandPostureCandidate}.`,
     `- Commercial program posture: ${commercialPosture}.`,
     '- Scope: brokerage.',
     `- Status: ${noteStatus}.`,
@@ -311,7 +328,7 @@ function buildAccountSnapshot(context) {
 }
 
 function buildContactSnapshot(context) {
-  const { record, data, linkedAccount, brandPosture, commercialPosture, noteStatus, teamObjective } = context;
+  const { record, data, linkedAccount, brandEvidence, brandPostureCandidate, commercialPosture, noteStatus, teamObjective } = context;
   const lines = [
     `- Primary object: ${formatValue(getRecordName(record, 'contacts', data))}, contact ${record.id}.`,
     `- Object role: ${deriveContactRole(data)}.`,
@@ -322,7 +339,8 @@ function buildContactSnapshot(context) {
   }
 
   lines.push(`- Team objective: ${teamObjective}.`);
-  lines.push(`- Brand posture: ${brandPosture}.`);
+  lines.push(`- Brand evidence: ${brandEvidence}.`);
+  lines.push(`- Brand posture candidate: ${brandPostureCandidate}.`);
   lines.push(`- Commercial program posture: ${commercialPosture}.`);
   lines.push('- Scope: isolated.');
   lines.push(`- Status: ${noteStatus}.`);
@@ -356,7 +374,7 @@ function buildContactSnapshot(context) {
 }
 
 function buildFranchiseFacts(context) {
-  const { record, objectType, data, notes, linkedAccount, brandPosture, teamId, teamObjective } = context;
+  const { record, objectType, data, notes, linkedAccount, brandEvidence, brandPostureCandidate, teamId, teamObjective } = context;
   const lines = [];
 
   if (teamObjective !== 'unknown') {
@@ -369,17 +387,17 @@ function buildFranchiseFacts(context) {
     }
   }
 
-  if (brandPosture === 'Royal LePage / retention') {
+  if (brandEvidence === 'Royal LePage name detected') {
     lines.push(
       objectType === 'accounts'
-        ? `- ${getRecordName(record, objectType, data)} is an in-brand brokerage in this dated export; use that brand posture inside the team objective.`
-        : `- ${getRecordName(record, objectType, data)} is linked to a Royal LePage account in this dated export; use that brand posture inside the team objective.`
+        ? `- ${getRecordName(record, objectType, data)} has a Royal LePage name marker in this dated export; use ${brandPostureCandidate} as a source-derived candidate inside the team objective.`
+        : `- ${getRecordName(record, objectType, data)} is linked to an account with a Royal LePage name marker in this dated export; use ${brandPostureCandidate} as a source-derived candidate inside the team objective.`
     );
-  } else if (brandPosture === 'non Royal LePage / prospecting') {
+  } else if (brandEvidence === 'no Royal LePage marker detected') {
     lines.push(
       objectType === 'accounts'
-        ? `- ${getRecordName(record, objectType, data)} is not labeled as Royal LePage in the dated export; use that brand posture inside the team objective.`
-        : `- ${getRecordName(record, objectType, data)} is linked to a non Royal LePage account in the dated export; use that brand posture inside the team objective.`
+        ? `- ${getRecordName(record, objectType, data)} has no Royal LePage name marker in the dated export; treat non-RLP posture as a candidate that needs confirmation from the broader source layer.`
+        : `- ${getRecordName(record, objectType, data)} is linked to an account with no Royal LePage name marker in the dated export; treat non-RLP posture as a candidate that needs confirmation from the broader source layer.`
     );
   }
 
@@ -739,6 +757,7 @@ function buildAccountContext(dayInfo, accountEntry, dayState, options) {
     ...noteEntries.map((entry) => entry.filePath),
   ], (filePath) => filePath);
   const noteStatus = deriveStatus(notes);
+  const brandClassification = deriveBrandClassification(accountEntry.record, 'accounts', accountEntry.data, null);
 
   return {
     teamId: options.teamId,
@@ -750,7 +769,8 @@ function buildAccountContext(dayInfo, accountEntry, dayState, options) {
     notes,
     relatedContacts,
     linkedAccount: null,
-    brandPosture: deriveBrandPosture(accountEntry.record, 'accounts', accountEntry.data, null),
+    brandEvidence: brandClassification.evidence,
+    brandPostureCandidate: brandClassification.postureCandidate,
     commercialPosture: deriveCommercialPosture(notes, accountEntry.data),
     teamObjective: deriveTeamObjective(options.teamId),
     noteStatus,
@@ -779,6 +799,7 @@ function buildContactContext(dayInfo, contactEntry, dayState, options) {
     ...noteEntries.map((entry) => entry.filePath),
   ], (filePath) => filePath);
   const noteStatus = deriveStatus(notes);
+  const brandClassification = deriveBrandClassification(contactEntry.record, 'contacts', contactEntry.data, linkedAccount);
 
   return {
     teamId: options.teamId,
@@ -790,7 +811,8 @@ function buildContactContext(dayInfo, contactEntry, dayState, options) {
     notes,
     relatedContacts: [],
     linkedAccount,
-    brandPosture: deriveBrandPosture(contactEntry.record, 'contacts', contactEntry.data, linkedAccount),
+    brandEvidence: brandClassification.evidence,
+    brandPostureCandidate: brandClassification.postureCandidate,
     commercialPosture: deriveCommercialPosture(notes, contactEntry.data),
     teamObjective: deriveTeamObjective(options.teamId),
     noteStatus,

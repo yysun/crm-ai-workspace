@@ -9,7 +9,7 @@ For contact memory extraction:
 - Apply the team objective first. Team `0` contacts are retention-first with supported commercial-program potential as a secondary lens, team `6` contacts are prospecting-first, and team `7` contacts are commercial-program-first.
 - Start with the contact's role in the account: owner, operator, team leader, agent, influencer, or unknown.
 - Read the person through the account's brand posture first, then add people-level commercial-program potential when supported.
-- Royal LePage agents default to retention at the people level; non Royal LePage contacts default to prospecting unless the user asked for another lens.
+- Royal LePage agents default to retention at the people level; confirmed non Royal LePage contacts default to prospecting unless the user asked for another lens. A generated `no Royal LePage marker detected` source label is only a confirmation prompt, not proof of that posture by itself.
 - Commercial-program potential can apply across both Royal LePage and non Royal LePage brokerages, but it does not change the brokerage's classification.
 - In team `7`, the commercial-program lens is primary rather than secondary; still preserve brokerage context so the contact is not detached from the real account relationship.
 

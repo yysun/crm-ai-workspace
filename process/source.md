@@ -55,7 +55,8 @@ Every `source.md` must include these sections after frontmatter:
 - Primary object: ...
 - Object role: brokerage | owner | operator | team leader | agent | office | territory | franchise relationship | unknown
 - Team objective: RLP retention + contact commercial program | non-RLP prospecting | contact commercial program | unknown
-- Brand posture: Royal LePage / retention | non Royal LePage / prospecting | unknown
+- Brand evidence: Royal LePage name detected | no Royal LePage marker detected | unknown
+- Brand posture candidate: Royal LePage / retention context | non-RLP / needs confirmation | unknown
 - Commercial program posture: targeted contact/agent | not indicated | unknown
 - Scope: isolated | team | brokerage | market | unknown
 - Status: confirmed | in progress | rumored | stale/unclear | unknown
@@ -89,7 +90,8 @@ The `Object Snapshot` section should capture the highest-value identifying and s
 - office, city, province, market, or territory markers when relevant
 - active or inactive status when present
 - affiliation, future affiliation, previous affiliation, or recruiting source when present
-- whether the object is a Royal LePage brokerage or a non Royal LePage brokerage when that can be verified from source evidence or the user-provided identifier
+- whether the object has a Royal LePage name marker in the local source evidence or user-provided identifier
+- whether a non-Royal-LePage posture is only a script-derived candidate that still needs agent confirmation from the full source layer
 - whether the object is being analyzed under a contact- or agent-level commercial program when that comes from source evidence or the user request
 - contract or ownership fields when present and relevant
 - the active dated bucket or other clear time markers needed for downstream traceability
@@ -101,8 +103,8 @@ Do not include every CRM field. Include the facts most likely to shape franchise
 Use this section to normalize the important factual signals into franchise terms without adding judgment. Examples:
 
 - contract end date exists and is within the next 12 months
-- brokerage is Royal LePage, so brand posture is retention context inside the team objective
-- brokerage is non Royal LePage, so brand posture is prospecting context inside the team objective
+- local account or linked-account naming contains a Royal LePage marker, so Royal LePage retention context is a brand-posture candidate inside the team objective
+- local account or linked-account naming contains no Royal LePage marker, so non-RLP posture needs confirmation from the broader source layer before prospecting judgment is asserted
 - team `0` indicates Royal LePage retention with supported contact commercial-program opportunity
 - team `6` indicates non-Royal-LePage prospecting
 - team `7` indicates contact commercial-program targeting
@@ -157,6 +159,7 @@ Before calling `source.md` valid, confirm:
 - `source_files` points only to existing, non-secret local export files, generated source files, or user-supplied evidence files used in the run.
 - Required sections are present: `Object Snapshot`, `Franchise Facts`, `Evidence Inventory`, `Key Unknowns`, and `Limits`.
 - Evidence bullets stay factual and do not include predictions, recommendations, or risk labels.
+- Script-derived brand labels distinguish evidence from judgment: lack of a Royal LePage name marker is not by itself proof of non-RLP prospecting posture.
 - Unknown facts that block renewal, ownership, recruiting, competitive, or brokerage-health judgment are marked `Unknown`.
 - Any missing local evidence coverage is described as a limit, not worked around through invention.
 - Any live lookup used for resolution is either reproduced by local source files or documented as missing local coverage.

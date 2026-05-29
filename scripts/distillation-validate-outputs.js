@@ -1,10 +1,17 @@
 #!/usr/bin/env node
+/*
+ * Validates structural requirements for agent-authored summary.md artifacts.
+ * This script checks shape, traceability bullets, stale phrasing, source file
+ * existence, and forbidden top-level action metadata headings; semantic
+ * judgment still requires process review and eval contract cases.
+ */
 
 const fs = require('fs');
 const path = require('path');
 const {
   REQUIRED_FRONTMATTER_KEYS,
   REQUIRED_SUMMARY_SECTIONS,
+  DISALLOWED_SUMMARY_SECTIONS,
   EVIDENCE_PREFIXES,
   STALE_PHRASES,
   parseArgs,
@@ -31,6 +38,12 @@ function validateSummary(summaryPath, scope) {
   for (const section of REQUIRED_SUMMARY_SECTIONS) {
     if (!summary.sections[section]) {
       errors.push(`missing required section ${section}`);
+    }
+  }
+
+  for (const section of DISALLOWED_SUMMARY_SECTIONS) {
+    if (summary.sections[section]) {
+      errors.push(`disallowed top-level section ${section}`);
     }
   }
 

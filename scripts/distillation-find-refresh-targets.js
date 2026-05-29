@@ -1,10 +1,16 @@
 #!/usr/bin/env node
+/*
+ * Finds source snapshots whose sibling summary.md is missing, expired, stale,
+ * or structurally invalid. It is an audit router only; agents still author
+ * judgment from source.md and semantic eval cases cover quality beyond shape.
+ */
 
 const fs = require('fs');
 const path = require('path');
 const {
   REQUIRED_FRONTMATTER_KEYS,
   REQUIRED_SUMMARY_SECTIONS,
+  DISALLOWED_SUMMARY_SECTIONS,
   EVIDENCE_PREFIXES,
   STALE_PHRASES,
   parseArgs,
@@ -42,6 +48,12 @@ function main() {
       for (const section of REQUIRED_SUMMARY_SECTIONS) {
         if (!summary.sections[section]) {
           reasons.push(`missing-section:${section}`);
+        }
+      }
+
+      for (const section of DISALLOWED_SUMMARY_SECTIONS) {
+        if (summary.sections[section]) {
+          reasons.push(`disallowed-section:${section}`);
         }
       }
 

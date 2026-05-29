@@ -216,8 +216,10 @@ Before calling the distillation complete, confirm:
 - downstream memory, tension, insight, and action were refreshed or downgraded if newer evidence narrowed confidence or exposed missing support
 - `## Memory`, `## Confidence`, and `## Review Notes` are present
 - `## Tensions`, `## Insight`, and `## Proposed Actions` appear only when supported
+- action rationale, preconditions, purpose, and local-state notes remain nested under `## Proposed Actions` rather than becoming extra top-level summary sections
 - no section contains raw field dumps that belong in `source.md`
 - no `action.md` is created during distillation
+- structural validation has passed, and any relevant semantic contract cases under `eval/` have been checked for judgment quality
 - final parent-level audit, validation, accumulated-action rebuild, and index rebuild were run when the batch changed supported actions or routing state
 
 ## Do Not Do

@@ -108,10 +108,10 @@ node scripts/refresh-crm-data.js
 3. Audit distillation coverage:
 
 ```text
-node scripts/distillation-find-refresh-targets.js
+node scripts/distillation-find-refresh-targets.js --from={yyyy-mm-dd} --to={yyyy-mm-dd}
 ```
 
-Use scope flags only when the user explicitly limited the run.
+Use the as-of date for default daily runs. Replace `{yyyy-mm-dd}` with the current local date unless the user supplied a different date. Omit `--from` and `--to` only when the user explicitly asks for the full backlog or all missing/stale summaries.
 
 4. If audit targets exist, create a fixed manifest under:
 

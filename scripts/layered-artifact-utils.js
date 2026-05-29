@@ -1,3 +1,11 @@
+/*
+ * Shared helpers for layered artifact audit and validation scripts.
+ * Exposes the structural summary contract while keeping semantic judgment
+ * checks in process docs and eval cases. Recent change: summary validation
+ * now names action-metadata headings that are not allowed as top-level
+ * summary sections.
+ */
+
 const fs = require('fs');
 const path = require('path');
 
@@ -16,6 +24,7 @@ const REQUIRED_FRONTMATTER_KEYS = [
 ];
 
 const REQUIRED_SUMMARY_SECTIONS = ['Memory', 'Evidence', 'Confidence', 'Review Notes'];
+const DISALLOWED_SUMMARY_SECTIONS = ['Rationale', 'Preconditions', 'Franchise Purpose', 'Not Tasks Yet'];
 const EVIDENCE_PREFIXES = ['Source files:', 'Object:', 'Coverage window:', 'Missing or unresolved:'];
 const STALE_PHRASES = [
   'live but incomplete decision window',
@@ -283,6 +292,7 @@ function summarizeReasons(reasons) {
 module.exports = {
   REQUIRED_FRONTMATTER_KEYS,
   REQUIRED_SUMMARY_SECTIONS,
+  DISALLOWED_SUMMARY_SECTIONS,
   EVIDENCE_PREFIXES,
   STALE_PHRASES,
   workspaceRoot,

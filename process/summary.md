@@ -42,7 +42,7 @@ Do not use chat history as source evidence unless it matches the generated sourc
 
 ## Output Format
 
-Use this structure after the required frontmatter. `## Memory`, `## Evidence`, `## Confidence`, and `## Review Notes` are always present. Add `## Tensions`, `## Insight`, and `## Proposed Actions` only when supported by the distillation flow:
+Use this structure after the required frontmatter. `## Memory`, `## Evidence`, `## Confidence`, and `## Review Notes` are always present. Add `## Tensions`, `## Insight`, and `## Proposed Actions` only when supported by the distillation flow. Do not add other top-level `##` sections to `summary.md`; action rationale, preconditions, purpose, and local-state notes belong as nested bullets under the relevant checkbox in `## Proposed Actions`.
 
 ```md
 ## Memory
@@ -143,6 +143,7 @@ Before calling `summary.md` valid, confirm:
 - Every material judgment is grounded in the same-run `source.md`.
 - Every material judgment remains traceable to a real source file, a real object, and a clear time window.
 - Proposed actions use Markdown checkboxes and remain local recommendations.
+- No action metadata appears as top-level sections such as `Rationale`, `Preconditions`, `Franchise Purpose`, or `Not Tasks Yet`.
 - Existing checkbox state was preserved when refreshing the `Proposed Actions` section while supported actions remained.
 - No `action.md` was created during distillation.
 - The `expires_at` value matches the TTL and should be treated as historical once expired.

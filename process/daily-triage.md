@@ -4,7 +4,7 @@
 
 Run a repeatable daily attention briefing from deterministic accumulated-action snapshots, then turn that briefing into a dated written summary plus three default Marp/PDF outputs: executive summary, what's new today, and full references.
 
-Daily triage briefing is an AI-agent workflow. Do not use scripts to generate the brief, Marp files, or PDFs. Use scripts only to build deterministic accumulated-action snapshots from existing local `summary.md` artifacts.
+Daily triage briefing is an AI-agent workflow. Agents author the written brief and Marp content. Deterministic renderers may export agent-authored Marp files to PDF. Use scripts only to build deterministic accumulated-action snapshots from existing local `summary.md` artifacts or to render already-authored presentation files; scripts must not author, rewrite, summarize, or adapt briefing content.
 
 Read `process/accumulated-actions.md` when accumulated-action snapshots are missing, stale, manually requested, or need explanation.
 

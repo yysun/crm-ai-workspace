@@ -22,7 +22,8 @@ Host assumptions:
 - The agent host can create parent folders under `data/` and `my-work/`.
 - The agent host can run local shell commands, source-generation scripts, deterministic export tools, and documented read-only CRM API helper scripts when needed.
 - The agent host does not call undocumented CRM endpoints directly from this workspace.
-- The agent host does not write back to the CRM from this workspace.
+- The agent host does not write CRM account, contact, or note records from this workspace.
+- The agent host may publish CRM Inbox or Actions artifacts only through the explicit gated scripts when the selected process contract requires or permits that publish step.
 
 Handler selection:
 
@@ -49,7 +50,7 @@ Durable knowledge belongs in `data/`. Behavior rules belong in `process/`. Dynam
 
 External write boundary: this workspace does not write CRM account, contact, or note records. Local summaries, checkboxes, reports, decks, and proposed actions are planning artifacts unless the user explicitly asks to publish action artifacts. The default operational publish target is CRM `Inbox` through `scripts/post-inbox.js`, which upserts enriched checkbox-level rows and same-day removals through `POST /api/data/inbox`. `scripts/post-accumulated-actions.js` may post accumulated daily markdown snapshots to CRM `Actions` through `POST /api/data/actions`, but that is archive-only and must be explicitly requested. Both scripts must require their explicit write-enable environment variable and support dry-run validation. Do not use the actions-table script for inbox rows, and do not use the inbox script for accumulated markdown snapshots.
 
-Validation expectation: do not claim a workflow is validated unless the relevant event path has been checked against its handler, expected `data/` reads or writes, expected `my-work/` artifacts, and any required export result.
+Validation expectation: do not claim a workflow is validated unless the relevant event path has been checked against its handler, expected `data/` reads or writes, expected `my-work/` artifacts, any required export result, and any relevant semantic contract cases under `eval/`. Structural scripts are useful gates, but they do not prove that the agent made the right franchise judgment.
 
 ## File Map
 
@@ -90,6 +91,7 @@ Validation expectation: do not claim a workflow is validated unless the relevant
 - `my-work/output/{yyyy}/{mm}/{dd}/`: dated final `.pptx`, `.pdf`, `.marp.md`, and other generated deliverables.
 - `my-work/output/{yyyy}/{mm}/{dd}/scratch/`: scratch artifacts, previews, generated source, and intermediate files for that dated output run.
 - `my-work/daily-triage/{yyyy}/{mm}/{dd}/`: dated daily triage briefs.
+- `eval/`: lightweight semantic contract cases for checking whether agent-authored judgment follows the source, scenario, object, and action rules beyond structural validation.
 
 ## Local Source Rules
 
@@ -130,7 +132,7 @@ node scripts/generate-source.js --year={yyyy} --overwrite
 node scripts/build-data-index.js
 ```
 
-Distillation and daily triage briefing are AI-agent workflows. Do not use scripts to create `summary.md`, daily triage briefs, Marp files, or PDFs. Scripts may load or list source batches for an agent to process, and may create deterministic accumulated-action queue snapshots from existing local `summary.md` artifacts.
+Distillation and daily triage briefing are AI-agent workflows. Agents author `summary.md`, daily triage briefs, and Marp content. Scripts may load or list source batches for an agent to process, create deterministic accumulated-action queue snapshots from existing local `summary.md` artifacts, and export agent-authored Marp files to PDF. Scripts must not author, rewrite, summarize, or adapt judgment or briefing content.
 
 When the user says `distill` or `distill today` without a different date range, distill only the current local date by default. After refresh, audit with `scripts/distillation-find-refresh-targets.js --from={yyyy-mm-dd} --to={yyyy-mm-dd}` for that date. Do not expand a bare `distill` request to the full missing/stale backlog. Use the full backlog only when the user explicitly asks for all missing summaries, all stale summaries, a full backlog, or a wider date range.
 
@@ -302,7 +304,7 @@ Daily triage run rules:
   - Team `0`: Royal LePage accounts and contacts. Primary objective is retention; contact-level commercial-program potential is a secondary objective when supported.
   - Team `6`: Non-Royal-LePage accounts and contacts. Primary objective is prospecting.
   - Team `7`: Non-Royal-LePage commercial / Royal LePage commercial accounts and contacts. Primary objective is contact-level commercial-program targeting; do not turn this lane into brokerage retention or brokerage prospecting unless source evidence separately supports it.
-- Classify brokerage brand posture explicitly. Royal LePage brokerages are in-brand franchise relationships and default to retention focus. Non-Royal LePage brokerages are out-of-brand prospecting targets unless current source evidence shows another posture the user explicitly asked to analyze.
+- Classify brokerage brand posture explicitly from current source evidence. Royal LePage brokerages are in-brand franchise relationships and default to retention focus. Confirmed non-Royal-LePage brokerages are out-of-brand prospecting targets unless current source evidence shows another posture the user explicitly asked to analyze. A script-derived `no Royal LePage marker detected` label is only brand evidence, not proof of confirmed non-RLP prospecting posture.
 - Keep brokerage posture separate from contact/agent program posture. A contact- or agent-level commercial program may target people inside both Royal LePage and non-Royal-LePage brokerages without reclassifying the brokerage itself.
 - For people-level analysis, Royal LePage agents default to agent retention. They may also be commercial-program targets when eligible, but commercial-program eligibility does not replace the retention posture.
 - In team `7`, commercial-program targeting is the primary lens for both accounts and contacts. For account summaries, preserve the brokerage context only to explain access, eligibility, and relationship path to commercial contacts; do not summarize the account as a retention/prospecting account by default.
@@ -401,9 +403,11 @@ Use generic relative workspace paths in documentation. Do not hardcode personal 
 ## Non-Negotiables
 
 - Use generated `source.md` files as the evidence boundary.
-- Do not call or write to the CRM from this workspace.
+- Do not write CRM account, contact, or note records.
+- Use CRM reads only through documented read-only helper scripts.
+- Use CRM Inbox or Actions publishing only through explicit gated scripts and only when the selected process contract requires or permits it.
 - Search business facts inside file contents, not names.
 - Run source-generation scripts only against local exports.
 - Do not invent missing source coverage.
-- Keep local actions local; checkboxes and proposed actions do not update CRM.
+- Keep local action state local until an explicit gated publish process runs; checking a box or writing `## Proposed Actions` does not update CRM by itself.
 - Keep the analysis specific to real estate franchising.

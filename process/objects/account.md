@@ -8,7 +8,7 @@ For account memory extraction:
 
 - Apply the team objective first. Team `0` accounts are retention-first, team `6` accounts are prospecting-first, and team `7` accounts are commercial-program-context accounts whose value is the path to eligible contacts or commercial-program adoption.
 - Royal LePage accounts default to retention, renewal strength, service value, and brokerage health.
-- Non Royal LePage accounts default to prospecting, recruiting upside, and competitive entry paths.
+- Confirmed non Royal LePage accounts default to prospecting, recruiting upside, and competitive entry paths. A generated `no Royal LePage marker detected` source label is only a confirmation prompt, not proof of that posture by itself.
 - Team `7` overrides the generic retention/prospecting default: do not treat a team `7` account as a normal retention or prospecting account unless the source independently supports that scenario. Its primary distillation question is which commercial contacts, roles, offices, or needs the account exposes.
 - Ownership, renewal, service friction, and competitor pressure can override the default emphasis only when the source evidence is explicit.
 
