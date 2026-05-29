@@ -5,21 +5,24 @@
 Handle the operator command:
 
 ```text
-download data, distill today, post actions and post inbox
+download data, distill today, post inbox
 ```
+
+Legacy wording such as `post actions and post inbox` means rebuild accumulated action state and publish the operational Inbox queue. It does not mean post the CRM `Actions` archive unless the user explicitly asks for archived daily snapshots.
 
 This is a process contract, not a scriptable command. It combines deterministic data refresh and posting helpers with agent-authored distillation. The agent owns orchestration, judgment, validation, and the decision to stop when the evidence boundary is not satisfied.
 
-The process answers: refresh the local CRM evidence, bring the judgment layer current for the run, rebuild the action queue, publish the accumulated action report to CRM `Actions`, and publish checkbox-level work items to CRM `Inbox`.
+The process answers: refresh the local CRM evidence, bring the judgment layer current for the run, rebuild the action queue, and publish enriched checkbox-level work items to CRM `Inbox`. Local accumulated-action files remain the deterministic state and audit source. CRM `Actions` posting is archive-only and is not part of the default daily operator queue.
 
 ## Trigger
 
 Use this process when the user asks for the full daily publish run with wording such as:
 
 - `download data, distill today, post actions and post inbox`
+- `download data, distill today, post inbox`
 - `run the daily process`
 - `refresh CRM, distill, post actions and inbox`
-- equivalent wording that includes refresh/download, distillation, accumulated actions, and inbox publishing
+- equivalent wording that includes refresh/download, distillation, accumulated action-state rebuild, and inbox publishing
 
 If the user asks only for daily triage briefing or deck output, use `process/daily-triage.md` instead. If the user asks only to rebuild action state, use `process/accumulated-actions.md`.
 
@@ -42,7 +45,7 @@ Prohibited automation:
 
 - scripts, templates, migrations, or bulk transforms that draft or rewrite `summary.md`
 - scripts that pretend to complete distillation
-- posting actions or inbox rows while required summaries are missing, stale, invalid, or known to be non-agent-authored
+- posting inbox rows or archived action snapshots while required summaries are missing, stale, invalid, or known to be non-agent-authored
 
 Distillation must be performed by agents from current `*-source.md` files under `process/distillation.md`, `process/summary.md`, the object overlays, section guides, and any relevant scenario process.
 
@@ -153,25 +156,22 @@ If no summary actions changed but the user requested a daily publish run, rebuil
 node scripts/build-data-index.js
 ```
 
-13. Dry-run both posting destinations before live writes:
+13. Dry-run Inbox posting before live writes:
 
 ```text
-node scripts/post-accumulated-actions.js --team-file --file={team-actions-md} --dry-run
 node scripts/post-inbox.js --date={yyyy-mm-dd} --dry-run
 ```
 
-Use one `--file` per team action report for accumulated actions.
+The Inbox dry-run parses active rows from `actions-{yyyy-mm-dd}.md` and same-day removed rows from `removed-actions-{yyyy-mm-dd}.json` when present.
 
-14. If dry-runs pass and the user requested posting, run the live posts:
+14. If the dry-run passes and the user requested posting, run the live Inbox post:
 
 ```text
-node scripts/post-accumulated-actions.js --team-file --file={team-actions-md}
 node scripts/post-inbox.js --date={yyyy-mm-dd}
 ```
 
 Live posting requires:
 
-- `AIW_ENABLE_CRM_ACTION_POST=1` for `POST /api/data/actions`
 - `AIW_ENABLE_CRM_INBOX_POST=1` for `POST /api/data/inbox`
 - `CRM_BASE_URL`
 - `CRM_ACCESS_TOKEN`
@@ -180,19 +180,21 @@ If gates are missing, stop after dry-run and report that posting was blocked by 
 
 ## Posting Rules
 
-Post accumulated action markdown snapshots to CRM `Actions` only:
-
-```text
-node scripts/post-accumulated-actions.js --team-file --file=data/0/daily-triage/{yyyy}/{mm}/{dd}/actions-{yyyy-mm-dd}.md
-```
-
-Post checkbox-level work items to CRM `Inbox` only:
+Default daily publishing posts enriched Inbox rows only:
 
 ```text
 node scripts/post-inbox.js --date={yyyy-mm-dd}
 ```
 
-Do not use the actions-table script for inbox rows. Do not use the inbox script for accumulated markdown snapshots.
+Inbox rows are the operational queue. They should include the action text, status, first/last seen dates, source paths, action key, and trace content from the action report. Same-day removed actions should be posted as non-open statuses so stale Inbox rows can be closed, superseded, or marked no longer supported.
+
+Post accumulated action markdown snapshots to CRM `Actions` only when the user explicitly asks for an archived daily snapshot:
+
+```text
+node scripts/post-accumulated-actions.js --team-file --file=data/0/daily-triage/{yyyy}/{mm}/{dd}/actions-{yyyy-mm-dd}.md
+```
+
+Do not use the actions-table script for inbox rows. Do not use the inbox script for archived accumulated markdown snapshots. Do not post CRM `Actions` during the default daily process unless the user explicitly asks for archive posting.
 
 ## Stop Conditions
 
@@ -203,7 +205,7 @@ Stop before posting when any of these are true:
 - distillation audit has targets remaining
 - summaries fail validation
 - a needed `actions-{yyyy-mm-dd}.md` file is missing
-- post dry-run fails
+- inbox dry-run fails
 - live post gates are not enabled
 - API credentials are missing
 - a noncompliant script-authored summary pass is discovered
@@ -220,9 +222,8 @@ Do not claim the daily process is complete unless:
 - validation reports zero summary failures
 - accumulated-action queues were rebuilt through the as-of date
 - data index was rebuilt after material layer changes
-- action posting dry-run passed
 - inbox posting dry-run passed
-- live posting either succeeded or was explicitly blocked by disabled write gates and reported as not posted
+- live Inbox posting either succeeded or was explicitly blocked by disabled write gates and reported as not posted
 
 Report final counts:
 
@@ -230,7 +231,6 @@ Report final counts:
 - distillation targets completed
 - validation failures
 - teams rebuilt
-- action report files posted or dry-run parsed
 - inbox payloads posted or dry-run parsed
 
 ## Non-Goals

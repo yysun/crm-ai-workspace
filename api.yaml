@@ -31,7 +31,7 @@ paths:
         - Inbox
       operationId: post_api_data_inbox
       summary: "POST /api/data/inbox"
-      description: "Upserts a checkbox-level inbox work item from an accumulated-action report using a stable actionKey. This route writes the Inbox table, not the Actions table."
+      description: "Upserts a checkbox-level inbox work item or removal state from accumulated-action outputs using a stable actionKey. This route writes the Inbox table, which is the operational action queue. The Actions table is for optional archived daily snapshots."
       requestBody:
         required: true
         content:
@@ -60,6 +60,12 @@ paths:
                   minLength: 1
                 status:
                   type: string
+                  enum:
+                    - open
+                    - done
+                    - removed
+                    - superseded
+                    - no_longer_supported
                   default: open
                 firstSeenDate:
                   type:
@@ -77,10 +83,70 @@ paths:
                   type: string
                   minLength: 1
                   maxLength: 1024
+                sourceActionsReportPath:
+                  type:
+                    - string
+                    - "null"
+                  maxLength: 1024
+                  default: null
+                sourceSummaryPath:
+                  type:
+                    - string
+                    - "null"
+                  maxLength: 1024
+                  default: null
                 sourceMarkdownSection:
                   type: string
                   minLength: 1
                   maxLength: 512
+                traceMarkdown:
+                  type:
+                    - string
+                    - "null"
+                  maxLength: 12000
+                  default: null
+                insightText:
+                  type:
+                    - string
+                    - "null"
+                  maxLength: 4000
+                  default: null
+                tensionsText:
+                  type:
+                    - string
+                    - "null"
+                  maxLength: 4000
+                  default: null
+                memoryText:
+                  type:
+                    - string
+                    - "null"
+                  maxLength: 4000
+                  default: null
+                evidenceDate:
+                  type:
+                    - string
+                    - "null"
+                  format: date
+                  default: null
+                removedDate:
+                  type:
+                    - string
+                    - "null"
+                  format: date
+                  default: null
+                removalReason:
+                  type:
+                    - string
+                    - "null"
+                  enum:
+                    - checked-or-completed
+                    - closed-status
+                    - no-supported-actions-in-summary
+                    - not-present-in-latest-action
+                    - removed
+                    - null
+                  default: null
                 actionKey:
                   type: string
                   minLength: 1
@@ -147,7 +213,7 @@ paths:
         - Actions
       operationId: post_api_data_actions
       summary: "POST /api/data/actions"
-      description: "Posts an accumulated daily action markdown snapshot to the Actions table. This route is for action report snapshots, not checkbox-level inbox items."
+      description: "Posts an accumulated daily action markdown snapshot to the Actions table. This route is for optional archived action report snapshots, not operational queue items. Daily operator work should use Inbox."
       requestBody:
         required: true
         content:
