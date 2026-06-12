@@ -18,6 +18,7 @@ const {
   collectFilesBySuffix,
   readMarkdown,
   bulletValues,
+  isExcludedSource,
   summarizeReasons,
   formatPath,
 } = require('./layered-artifact-utils');
@@ -29,8 +30,18 @@ function main() {
   const sourcePaths = collectFilesBySuffix(scope, '-source.md');
   const targets = [];
   const allReasons = [];
+  const excludedSources = [];
 
   for (const sourcePath of sourcePaths) {
+    const source = readMarkdown(sourcePath);
+    if (isExcludedSource(source)) {
+      excludedSources.push({
+        sourcePath: formatPath(sourcePath, scope),
+        status: source.frontmatter.status || null,
+      });
+      continue;
+    }
+
     const summaryPath = sourcePath.replace(/-source\.md$/, '-summary.md');
     const reasons = [];
 
@@ -102,8 +113,11 @@ function main() {
       to: args.to,
     },
     sourceFiles: sourcePaths.length,
+    eligibleSourceFiles: sourcePaths.length - excludedSources.length,
+    excludedSourceFiles: excludedSources.length,
     targets: targets.length,
     reasonCounts: summarizeReasons(allReasons),
+    excluded: excludedSources,
     items: targets,
   };
 

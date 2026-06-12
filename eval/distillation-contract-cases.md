@@ -56,11 +56,11 @@ For each relevant case, inspect the current `source.md`, selected process files,
 - Pass condition: each action is a checkbox with an action type and business purpose; rationale, preconditions, and local-state notes are nested under the checkbox when needed.
 - Fail condition: the summary adds top-level `## Rationale`, `## Preconditions`, `## Franchise Purpose`, or `## Not Tasks Yet` sections, or presents local recommendations as CRM tasks.
 
-### Inactive Retirement
+### Inactive Exclusion
 
 - Input condition: current source evidence shows an account or contact is inactive, closed, archived, completed, unaffiliated, or otherwise no longer active for franchise follow-up.
-- Pass condition: `## Memory` records the inactive state and source-backed reason or uncertainty; tensions, insight, and proposed actions are omitted unless a separate active franchise consequence is supported.
-- Fail condition: stale pressure or old actions are carried forward after the object is no longer active.
+- Pass condition: the source is excluded from normal distillation targets, no new inactive `summary.md` is authored, and accumulated-action rebuild treats the closed source as a `closed-status` removal signal for prior queued actions.
+- Fail condition: stale pressure or old actions are carried forward after the object is no longer active, or the agent writes a new inactive summary during the normal distillation process.
 
 ### Daily Triage Authorship
 

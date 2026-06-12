@@ -89,6 +89,7 @@ The `Object Snapshot` section should capture the highest-value identifying and s
 - role in the franchise system if visible
 - office, city, province, market, or territory markers when relevant
 - active or inactive status when present
+- lifecycle status in frontmatter: use `active` unless the local export explicitly marks the record closed, inactive, archived, completed, terminated, cancelled, disabled, deleted, or `isActive: false`
 - affiliation, future affiliation, previous affiliation, or recruiting source when present
 - whether the object has a Royal LePage name marker in the local source evidence or user-provided identifier
 - whether a non-Royal-LePage posture is only a script-derived candidate that still needs agent confirmation from the full source layer
@@ -156,6 +157,7 @@ Even without a TTL expiry, refresh `source.md` whenever local exports add newer 
 Before calling `source.md` valid, confirm:
 
 - Frontmatter includes `created_at`, `updated_at`, `ttl`, `expires_at`, `status`, `source_date`, and `source_files`.
+- Frontmatter `status` is the routing lifecycle status. Closed-style values exclude the source from normal distillation and active daily-triage scope.
 - `source_files` points only to existing, non-secret local export files, generated source files, or user-supplied evidence files used in the run.
 - Required sections are present: `Object Snapshot`, `Franchise Facts`, `Evidence Inventory`, `Key Unknowns`, and `Limits`.
 - Evidence bullets stay factual and do not include predictions, recommendations, or risk labels.

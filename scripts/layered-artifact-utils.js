@@ -30,6 +30,18 @@ const STALE_PHRASES = [
   'live but incomplete decision window',
   'The relationship appears active, but diligence and next-step completion remain unresolved',
 ];
+const CLOSED_STATUS_VALUES = new Set([
+  'closed',
+  'complete',
+  'completed',
+  'inactive',
+  'archived',
+  'terminated',
+  'cancelled',
+  'canceled',
+  'disabled',
+  'deleted',
+]);
 
 function parseArgs(argv) {
   const args = {
@@ -281,6 +293,23 @@ function hasProposedActions(artifact) {
   return Object.prototype.hasOwnProperty.call(artifact.sections, 'Proposed Actions');
 }
 
+function compact(value) {
+  return String(value || '').replace(/\s+/g, ' ').trim();
+}
+
+function normalizeStatus(value) {
+  return compact(value).toLowerCase().replace(/[_-]+/g, ' ');
+}
+
+function isClosedStatus(value) {
+  const normalized = normalizeStatus(value);
+  return CLOSED_STATUS_VALUES.has(normalized) || /^inactive\b/.test(normalized) || /^closed\b/.test(normalized);
+}
+
+function isExcludedSource(sourceMarkdown) {
+  return isClosedStatus(sourceMarkdown && sourceMarkdown.frontmatter && sourceMarkdown.frontmatter.status);
+}
+
 function summarizeReasons(reasons) {
   const counts = {};
   for (const reason of reasons) {
@@ -304,6 +333,10 @@ module.exports = {
   readMarkdown,
   bulletValues,
   hasProposedActions,
+  compact,
+  normalizeStatus,
+  isClosedStatus,
+  isExcludedSource,
   summarizeReasons,
   formatPath,
 };

@@ -75,4 +75,4 @@ TTL is controlled by `process/summary.md`.
 - There is no clear contradiction, pressure, risk, or opportunity.
 - The only evidence is stale and not supported by the current generated source layer.
 - The output would simply repeat facts already covered in `source.md`.
-- The account or contact is inactive, closed, archived, completed, unaffiliated, or otherwise no longer active for franchise follow-up, unless the current source layer supports a separate active franchise consequence.
+- The account or contact is inactive, closed, archived, completed, terminated, or otherwise no longer active for franchise follow-up.

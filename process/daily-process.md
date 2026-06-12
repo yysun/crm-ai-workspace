@@ -113,6 +113,8 @@ node scripts/distillation-find-refresh-targets.js --from={yyyy-mm-dd} --to={yyyy
 
 Use the as-of date for default daily runs. Replace `{yyyy-mm-dd}` with the current local date unless the user supplied a different date. Omit `--from` and `--to` only when the user explicitly asks for the full backlog or all missing/stale summaries.
 
+The audit excludes inactive or closed source snapshots from distillation targets and reports `excludedSourceFiles`. Treat those records as out of process for summary authorship, not as missing summaries.
+
 4. If audit targets exist, create a fixed manifest under:
 
 ```text
@@ -131,7 +133,7 @@ The manifest is routing state only. It should record:
 
 5. Split the manifest into batches of up to 100 targets.
 6. If the run is large enough that parallel work is needed, ask for explicit approval before spawning parallel agents. Without that approval, process batches sequentially.
-7. Distill each target by reading the current `*-source.md` and authoring the sibling `*-summary.md` directly from the distillation process. Scripts may list or load batches, but must not draft summary text.
+7. Distill each target by reading the current eligible active `*-source.md` and authoring the sibling `*-summary.md` directly from the distillation process. Scripts may list or load batches, but must not draft summary text.
 8. Track the earliest and latest snapshot dates for any created, updated, checked, removed, or materially changed `## Proposed Actions`.
 9. Re-run the distillation audit for the requested scope. Do not proceed until it reports zero targets.
 10. Validate summary outputs:
@@ -142,7 +144,7 @@ node scripts/distillation-validate-outputs.js
 
 Do not proceed until validation reports zero failures.
 
-11. Rebuild accumulated actions once per affected team/date range. Use the earliest changed action snapshot date as `--from` and the as-of date as `--to`:
+11. Rebuild accumulated actions once per affected team/date range. Also rebuild when the refresh generated closed-style source snapshots in the date/team scope, because those sources remove stale queued actions. Use the earliest changed action snapshot date or earliest closed source date as `--from` and the as-of date as `--to`:
 
 ```text
 node scripts/build-accumulated-actions.js --team={teamId} --from={start-date} --to={as-of-date}

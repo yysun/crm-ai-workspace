@@ -9,7 +9,11 @@
 
 const fs = require('fs');
 const path = require('path');
-const { normalizeTeamId } = require('./layered-artifact-utils');
+const {
+  normalizeTeamId,
+  normalizeStatus,
+  isClosedStatus,
+} = require('./layered-artifact-utils');
 
 const workspaceRoot = path.resolve(__dirname, '..');
 const dataRoot = path.join(workspaceRoot, 'data');
@@ -183,6 +187,98 @@ function deriveTeamObjective(teamId) {
   return 'unknown';
 }
 
+function firstPresent(...values) {
+  return values.find((value) => value !== undefined && value !== null && value !== '');
+}
+
+function booleanLike(value) {
+  if (value === true || value === false) {
+    return value;
+  }
+  const normalized = normalizeStatus(value);
+  if (['true', 'yes', 'y', '1'].includes(normalized)) {
+    return true;
+  }
+  if (['false', 'no', 'n', '0'].includes(normalized)) {
+    return false;
+  }
+  return null;
+}
+
+function closedStatusLabel(value) {
+  const normalized = normalizeStatus(value);
+  if (!normalized) {
+    return null;
+  }
+  if (normalized.startsWith('closed')) {
+    return 'closed';
+  }
+  if (normalized.startsWith('archived')) {
+    return 'archived';
+  }
+  if (['complete', 'completed'].includes(normalized)) {
+    return 'completed';
+  }
+  if (['terminated', 'cancelled', 'canceled', 'disabled', 'deleted'].includes(normalized)) {
+    return 'inactive';
+  }
+  return isClosedStatus(normalized) ? 'inactive' : null;
+}
+
+function deriveLifecycleStatus(record, data) {
+  const closedBooleanFields = [
+    ['isClosed', 'closed'],
+    ['closed', 'closed'],
+    ['isArchived', 'archived'],
+    ['archived', 'archived'],
+    ['isDeleted', 'inactive'],
+    ['deleted', 'inactive'],
+    ['isTerminated', 'inactive'],
+    ['terminated', 'inactive'],
+  ];
+
+  for (const [field, label] of closedBooleanFields) {
+    const flag = booleanLike(firstPresent(record[field], data[field]));
+    if (flag === true) {
+      return label;
+    }
+  }
+
+  const activeFlag = booleanLike(firstPresent(
+    record.isActive,
+    data.isActive,
+    record.active,
+    data.active
+  ));
+  if (activeFlag === false) {
+    return 'inactive';
+  }
+
+  const statusFields = [
+    record.status,
+    record.Status,
+    record.accountStatus,
+    record.contactStatus,
+    record.lifecycleStatus,
+    record.state,
+    data.status,
+    data.Status,
+    data.accountStatus,
+    data.contactStatus,
+    data.lifecycleStatus,
+    data.state,
+  ];
+
+  for (const value of statusFields) {
+    const label = closedStatusLabel(value);
+    if (label) {
+      return label;
+    }
+  }
+
+  return 'active';
+}
+
 function deriveContactRole(data) {
   const roleText = `${data.employeeType || ''} ${data.title || ''} ${data.titleDescription || ''}`.toLowerCase();
   if (roleText.includes('broker owner') || roleText.includes('owner')) {
@@ -258,7 +354,7 @@ function formatValue(value) {
 }
 
 function buildAccountSnapshot(context) {
-  const { record, data, relatedContacts, brandEvidence, brandPostureCandidate, commercialPosture, noteStatus, teamObjective } = context;
+  const { record, data, relatedContacts, brandEvidence, brandPostureCandidate, commercialPosture, noteStatus, teamObjective, lifecycleStatus } = context;
   const lines = [
     `- Primary object: ${formatValue(getRecordName(record, 'accounts', data))}, account ${record.id}.`,
     '- Object role: brokerage.',
@@ -266,6 +362,7 @@ function buildAccountSnapshot(context) {
     `- Brand evidence: ${brandEvidence}.`,
     `- Brand posture candidate: ${brandPostureCandidate}.`,
     `- Commercial program posture: ${commercialPosture}.`,
+    `- Record lifecycle status: ${lifecycleStatus}.`,
     '- Scope: brokerage.',
     `- Status: ${noteStatus}.`,
   ];
@@ -328,7 +425,7 @@ function buildAccountSnapshot(context) {
 }
 
 function buildContactSnapshot(context) {
-  const { record, data, linkedAccount, brandEvidence, brandPostureCandidate, commercialPosture, noteStatus, teamObjective } = context;
+  const { record, data, linkedAccount, brandEvidence, brandPostureCandidate, commercialPosture, noteStatus, teamObjective, lifecycleStatus } = context;
   const lines = [
     `- Primary object: ${formatValue(getRecordName(record, 'contacts', data))}, contact ${record.id}.`,
     `- Object role: ${deriveContactRole(data)}.`,
@@ -342,6 +439,7 @@ function buildContactSnapshot(context) {
   lines.push(`- Brand evidence: ${brandEvidence}.`);
   lines.push(`- Brand posture candidate: ${brandPostureCandidate}.`);
   lines.push(`- Commercial program posture: ${commercialPosture}.`);
+  lines.push(`- Record lifecycle status: ${lifecycleStatus}.`);
   lines.push('- Scope: isolated.');
   lines.push(`- Status: ${noteStatus}.`);
 
@@ -374,8 +472,12 @@ function buildContactSnapshot(context) {
 }
 
 function buildFranchiseFacts(context) {
-  const { record, objectType, data, notes, linkedAccount, brandEvidence, brandPostureCandidate, teamId, teamObjective } = context;
+  const { record, objectType, data, notes, linkedAccount, brandEvidence, brandPostureCandidate, teamId, teamObjective, lifecycleStatus } = context;
   const lines = [];
+
+  if (isClosedStatus(lifecycleStatus)) {
+    lines.push(`- The ${objectType === 'accounts' ? 'account' : 'contact'} snapshot has record lifecycle status ${lifecycleStatus}; default distillation and triage should exclude it from active franchise follow-up.`);
+  }
 
   if (teamObjective !== 'unknown') {
     if (String(teamId) === '0') {
@@ -535,7 +637,7 @@ function buildLimits(objectType, notes) {
 }
 
 function buildFrontmatter(context) {
-  const { objectType, record, createdAt, sourceDate, sourceFiles, teamId } = context;
+  const { objectType, record, createdAt, sourceDate, sourceFiles, teamId, lifecycleStatus } = context;
   const lines = [
     '---',
     `team_id: ${teamId}`,
@@ -546,7 +648,7 @@ function buildFrontmatter(context) {
     `updated_at: ${createdAt}`,
     'ttl: none',
     'expires_at: none',
-    'status: active',
+    `status: ${lifecycleStatus}`,
     `source_date: ${sourceDate}`,
     'source_files:',
     ...sourceFiles.map((filePath) => `  - ${toPosixRelative(filePath)}`),
@@ -758,6 +860,7 @@ function buildAccountContext(dayInfo, accountEntry, dayState, options) {
   ], (filePath) => filePath);
   const noteStatus = deriveStatus(notes);
   const brandClassification = deriveBrandClassification(accountEntry.record, 'accounts', accountEntry.data, null);
+  const lifecycleStatus = deriveLifecycleStatus(accountEntry.record, accountEntry.data);
 
   return {
     teamId: options.teamId,
@@ -773,6 +876,7 @@ function buildAccountContext(dayInfo, accountEntry, dayState, options) {
     brandPostureCandidate: brandClassification.postureCandidate,
     commercialPosture: deriveCommercialPosture(notes, accountEntry.data),
     teamObjective: deriveTeamObjective(options.teamId),
+    lifecycleStatus,
     noteStatus,
     createdAt: options.createdAt,
     sourceDate: `${options.year}-${dayInfo.monthName}-${dayInfo.dayName}`,
@@ -800,6 +904,7 @@ function buildContactContext(dayInfo, contactEntry, dayState, options) {
   ], (filePath) => filePath);
   const noteStatus = deriveStatus(notes);
   const brandClassification = deriveBrandClassification(contactEntry.record, 'contacts', contactEntry.data, linkedAccount);
+  const lifecycleStatus = deriveLifecycleStatus(contactEntry.record, contactEntry.data);
 
   return {
     teamId: options.teamId,
@@ -815,6 +920,7 @@ function buildContactContext(dayInfo, contactEntry, dayState, options) {
     brandPostureCandidate: brandClassification.postureCandidate,
     commercialPosture: deriveCommercialPosture(notes, contactEntry.data),
     teamObjective: deriveTeamObjective(options.teamId),
+    lifecycleStatus,
     noteStatus,
     createdAt: options.createdAt,
     sourceDate: `${options.year}-${dayInfo.monthName}-${dayInfo.dayName}`,

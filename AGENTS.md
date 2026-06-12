@@ -31,12 +31,13 @@ Handler selection:
 2. Read the narrowest matching file under `process/`.
 3. Search and read only the current local state needed from `data/`.
 4. If a needed `*-source.md` file is missing or stale and local exports are available, run the relevant source-generation script before distilling judgment.
-5. Run distillation and daily triage directly from the selected process handler rather than through a script. Scripts may load, queue, or list batches, but must not draft or write `summary.md`.
-6. Apply the selected handler's read, write, output, and validation rules.
+5. Exclude inactive, closed, archived, completed, terminated, or otherwise inactive account/contact sources from normal distillation, daily triage, and inbox publishing. They may appear only as factual source-layer evidence or as removal signals for stale queued actions.
+6. Run distillation and daily triage directly from the selected process handler rather than through a script. Scripts may load, queue, or list batches, but must not draft or write `summary.md`.
+7. Apply the selected handler's read, write, output, and validation rules.
 
 Large distillation runs must use the compliant agent-authored batch pattern:
 
-1. Audit missing or stale summaries with `scripts/distillation-find-refresh-targets.js`.
+1. Audit missing or stale summaries with `scripts/distillation-find-refresh-targets.js`; its targets exclude inactive or closed source snapshots.
 2. Create a fixed manifest under `my-work/{yyyy}/{mm}/{dd}/` when the run is large enough to split, recording source paths, summary paths, batch IDs, first/last source, and count. This manifest is routing state only, not evidence.
 3. Split work into disjoint batches of up to 100 objects. Smaller tail batches are allowed.
 4. If the user explicitly approves parallel agents, assign each worker one batch and clear write ownership: the worker may write only its assigned sibling `*-summary.md` paths and must not rebuild indexes, rebuild accumulated actions, edit progress notes, or touch unrelated files.
@@ -228,7 +229,7 @@ When the task is distillation rather than fact gathering, start from the matchin
 
 Distillation is an AI-agent workflow, not a script workflow. Scripts may load or list batches, but the agent must follow `AGENTS.md` and the relevant `process/` files step by step when writing summaries.
 
-When current source evidence shows that an account or contact has become inactive, closed, archived, completed, unaffiliated, or otherwise no longer active for franchise follow-up, update `## Memory` with the inactive state and the source-backed reason or uncertainty. Do not create or carry forward `## Tensions`, `## Insight`, or `## Proposed Actions` for inactive accounts or contacts unless the current source evidence shows a separate active franchise consequence that still requires attention. Remove prior open actions by omitting `## Proposed Actions` from the refreshed `summary.md`, and record the affected snapshot date for accumulated-action rebuild. Inactive status should retire stale pressure, not manufacture new interpretation.
+When current source evidence shows that an account or contact has become inactive, closed, archived, completed, terminated, or otherwise no longer active for franchise follow-up, exclude that source from normal distillation. Do not create or refresh `summary.md`, `## Tensions`, `## Insight`, or `## Proposed Actions` for inactive accounts or contacts unless the user explicitly asks for an exception and the current source layer supports a separate active franchise consequence. Closed-style source frontmatter is enough for the accumulated-action rebuild to remove prior queued actions with `closed-status`.
 
 When the request covers many objects, use the approved batch pattern:
 

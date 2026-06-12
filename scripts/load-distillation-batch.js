@@ -6,6 +6,7 @@ const {
   buildScope,
   collectFilesBySuffix,
   readMarkdown,
+  isExcludedSource,
   formatPath,
   workspaceRoot,
 } = require('./layered-artifact-utils');
@@ -15,6 +16,7 @@ function parseLocalArgs(argv) {
   args.limit = 100;
   args.offset = 0;
   args.missingOnly = false;
+  args.includeExcluded = false;
 
   for (const part of argv) {
     if (part.startsWith('--limit=')) {
@@ -27,6 +29,10 @@ function parseLocalArgs(argv) {
     }
     if (part === '--missing-only') {
       args.missingOnly = true;
+      continue;
+    }
+    if (part === '--include-excluded') {
+      args.includeExcluded = true;
     }
   }
 
@@ -55,7 +61,21 @@ function objectName(markdown) {
 function main() {
   const args = parseLocalArgs(process.argv.slice(2));
   const scope = buildScope(args);
-  let sourcePaths = collectFilesBySuffix(scope, '-source.md');
+  const allSourcePaths = collectFilesBySuffix(scope, '-source.md');
+  const excluded = [];
+  let sourcePaths = [];
+
+  for (const sourcePath of allSourcePaths) {
+    const markdown = readMarkdown(sourcePath);
+    if (!args.includeExcluded && isExcludedSource(markdown)) {
+      excluded.push({
+        source_path: formatPath(sourcePath, scope),
+        status: markdown.frontmatter.status || null,
+      });
+      continue;
+    }
+    sourcePaths.push(sourcePath);
+  }
 
   if (args.missingOnly) {
     sourcePaths = sourcePaths.filter((sourcePath) => !require('fs').existsSync(summaryPathFor(sourcePath)));
@@ -83,6 +103,8 @@ function main() {
       from: args.from,
       to: args.to,
     },
+    total_source_files: allSourcePaths.length,
+    excluded_sources: excluded.length,
     total_sources: sourcePaths.length,
     offset: args.offset,
     limit: args.limit,

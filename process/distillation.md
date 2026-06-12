@@ -10,7 +10,7 @@ In dated buckets, the summary lives beside the object JSON and `*-source.md` fil
 
 Distillation is an AI-agent workflow. Do not use scripts to draft or refresh `summary.md`. Scripts may load or list source batches, but the agent must follow this process step by step when writing summaries.
 
-For large runs, use fixed, agent-owned batches. The compliant pattern is: audit the missing/stale targets, freeze a dated manifest under `my-work/{yyyy}/{mm}/{dd}/`, split into disjoint batches of up to 100 objects, have each assigned agent author only its sibling `*-summary.md` files from the current `*-source.md` files, then run parent-level validation, accumulated-action rebuilds, and index rebuild. Scripts may organize, validate, and rebuild deterministic state; they must not draft, migrate, template, or bulk-transform summary judgment.
+For large runs, use fixed, agent-owned batches. The compliant pattern is: audit the missing/stale eligible targets, freeze a dated manifest under `my-work/{yyyy}/{mm}/{dd}/`, split into disjoint batches of up to 100 objects, have each assigned agent author only its sibling `*-summary.md` files from the current active `*-source.md` files, then run parent-level validation, accumulated-action rebuilds, and index rebuild. Scripts may organize, validate, and rebuild deterministic state; they must not draft, migrate, template, or bulk-transform summary judgment.
 
 This process is the orchestration layer for the section guides in:
 
@@ -101,31 +101,31 @@ Run the steps in this order:
 
 1. Read the target `source.md` for the object and snapshot.
 2. Confirm the `source.md` frontmatter and required sections are present.
-3. Establish the traceability envelope for the run: team ID, object type, object ID, source files, source date or coverage window, and current key unknowns.
-4. Determine whether the object is an account or a contact from the target path or frontmatter.
-5. Determine the team objective from `team_id` before applying generic brand posture:
+3. Check the source frontmatter `status`. If it is closed, inactive, archived, completed, terminated, cancelled, disabled, deleted, or another closed-style value, stop normal distillation for that object. Do not write or refresh `summary.md`; let accumulated-action rebuild consume the closed source as a `closed-status` removal signal.
+4. Establish the traceability envelope for the run: team ID, object type, object ID, source files, source date or coverage window, and current key unknowns.
+5. Determine whether the object is an account or a contact from the target path or frontmatter.
+6. Determine the team objective from `team_id` before applying generic brand posture:
    - Team `0`: Royal LePage retention first; contact commercial-program potential second when supported.
    - Team `6`: non-Royal-LePage prospecting first.
    - Team `7`: contact commercial-program targeting first for both accounts and contacts.
-6. Read `process/summary.md` as the output contract.
-7. Read `process/memory.md` plus the matching object overlay in `process/objects/account.md` or `process/objects/contact.md` before drafting `## Memory`.
-8. Use the overlay's `## Rule Table` as a required decision table for the run. Evaluate the source evidence against the table columns in order: `Situation Type`, `Key Input Fields`, `Minimum Trigger Threshold`, `Tension`, `Judgment Direction`, `Suggested Action`, and `Prohibited Misuse`.
-9. Match only the row or rows whose `Key Input Fields` are actually present in `source.md` and whose `Minimum Trigger Threshold` is met by the current evidence. If no row clears its threshold, do not force an object-level judgment from the table.
-10. For each matched row, use `Tension` to shape `## Tensions`, use `Judgment Direction` to shape `## Memory` and `## Insight`, use `Suggested Action` to constrain `## Proposed Actions`, and use `Prohibited Misuse` as a guardrail against overreach.
-11. Apply the team objective before brand posture:
+7. Read `process/summary.md` as the output contract.
+8. Read `process/memory.md` plus the matching object overlay in `process/objects/account.md` or `process/objects/contact.md` before drafting `## Memory`.
+9. Use the overlay's `## Rule Table` as a required decision table for the run. Evaluate the source evidence against the table columns in order: `Situation Type`, `Key Input Fields`, `Minimum Trigger Threshold`, `Tension`, `Judgment Direction`, `Suggested Action`, and `Prohibited Misuse`.
+10. Match only the row or rows whose `Key Input Fields` are actually present in `source.md` and whose `Minimum Trigger Threshold` is met by the current evidence. If no row clears its threshold, do not force an object-level judgment from the table.
+11. For each matched row, use `Tension` to shape `## Tensions`, use `Judgment Direction` to shape `## Memory` and `## Insight`, use `Suggested Action` to constrain `## Proposed Actions`, and use `Prohibited Misuse` as a guardrail against overreach.
+12. Apply the team objective before brand posture:
     - For team `0`, accounts are retention-first; contacts are retention-first with commercial-program potential added only when evidence supports it.
     - For team `6`, accounts and contacts are prospecting-first; do not reframe them as retention cases because they resemble an in-brand workflow.
     - For team `7`, accounts and contacts are commercial-program-first; for accounts, summarize brokerage context only as it affects commercial contact access, eligibility, or program fit.
-12. For contacts, anchor the person to the linked account when known, preserve the account relationship in memory, and keep commercial-program potential separate from brokerage classification unless team `7` makes the commercial-program lens primary.
-13. Do not move any fact or interpretation into `## Memory`, `## Tensions`, `## Insight`, or `## Proposed Actions` unless it can still be tied back to the traceability envelope established from the current source layer.
-    - If the current source evidence shows that the account or contact is inactive, closed, archived, completed, unaffiliated, or otherwise no longer active for franchise follow-up, update `## Memory` with that inactive state and the source-backed reason or uncertainty, then omit `## Tensions`, `## Insight`, and `## Proposed Actions` unless a separate active franchise consequence is explicitly supported. If a prior summary carried open actions, remove them by omitting `## Proposed Actions` and record the snapshot date for accumulated-action rebuild.
-14. Read `process/tension.md` and add `## Tensions` only when active pressure, contradiction, risk, or opportunity is supported.
-15. Read `process/insight.md` and add `## Insight` only when the current evidence supports a meaningful judgment.
-16. Read `process/action.md` and add `## Proposed Actions` only when actions follow from the current evidence and insight.
-17. Write or refresh `summary.md` for the same snapshot.
-18. Do not create `action.md`; `summary.md` is the sole judgment artifact.
-19. If the summary's `## Proposed Actions` section was created, updated, checked, removed, or materially changed, record the affected snapshot date for accumulated-action rebuild.
-20. After all requested objects in the distillation run have been processed, rebuild accumulated-action snapshots once if any affected summary action dates were recorded:
+13. For contacts, anchor the person to the linked account when known, preserve the account relationship in memory, and keep commercial-program potential separate from brokerage classification unless team `7` makes the commercial-program lens primary.
+14. Do not move any fact or interpretation into `## Memory`, `## Tensions`, `## Insight`, or `## Proposed Actions` unless it can still be tied back to the traceability envelope established from the current source layer.
+15. Read `process/tension.md` and add `## Tensions` only when active pressure, contradiction, risk, or opportunity is supported.
+16. Read `process/insight.md` and add `## Insight` only when the current evidence supports a meaningful judgment.
+17. Read `process/action.md` and add `## Proposed Actions` only when actions follow from the current evidence and insight.
+18. Write or refresh `summary.md` for the same snapshot.
+19. Do not create `action.md`; `summary.md` is the sole judgment artifact.
+20. If the summary's `## Proposed Actions` section was created, updated, checked, removed, or materially changed, record the affected snapshot date for accumulated-action rebuild.
+21. After all requested objects in the distillation run have been processed, rebuild accumulated-action snapshots once if any affected summary action dates were recorded, or if closed source snapshots were generated in the requested date/team scope:
 
 ```text
 node scripts/build-accumulated-actions.js --team={teamId} --from={earliest-affected-date} --to={latest-required-date}
@@ -141,7 +141,7 @@ Do not skip directly to actions. `Insight` should follow from evidence, memory, 
 
 Use this protocol when the requested distillation scope is too large for one agent to author comfortably in a single pass.
 
-1. Run `scripts/distillation-find-refresh-targets.js` for the requested scope to identify missing or stale summaries.
+1. Run `scripts/distillation-find-refresh-targets.js` for the requested scope to identify missing or stale summaries. The audit excludes closed-style source snapshots and reports the excluded count.
 2. Write a fixed manifest under `my-work/{yyyy}/{mm}/{dd}/` that records each `source_path`, `summary_path`, batch ID, year/team scope, first source, last source, and count. The manifest is a routing artifact only.
 3. Split the manifest into batches of up to 100 objects. Tail batches may be smaller.
 4. If the user explicitly approves parallel agents, assign each worker one batch and a disjoint write set. Workers may write only assigned sibling `*-summary.md` files.
@@ -176,7 +176,7 @@ data/{teamId}/{yyyy}/{mm}/{dd}/contacts/{id}/contact-{id}-summary.md
 
 When supported actions exist, keep them in `## Proposed Actions` inside `summary.md` as Markdown checkboxes. When supported actions do not exist, omit `## Proposed Actions`. The accumulated-action script reads summaries directly and detects additions, carries, checked completions, removed actions, and summaries that no longer contain supported actions.
 
-When an account or contact becomes inactive, closed, archived, completed, unaffiliated, or otherwise no longer active for franchise follow-up, existing open actions are no longer supported by default. Omit `## Proposed Actions` in the refreshed summary unless the current source layer supports a separate active franchise consequence, and rebuild accumulated actions so the old rows are removed.
+When an account or contact becomes inactive, closed, archived, completed, terminated, or otherwise no longer active for franchise follow-up, it is excluded from normal distillation. Do not refresh the summary just to say it is inactive. Rebuild accumulated actions so the closed source snapshot removes old rows with `closed-status`.
 
 ## Scenario Use
 
@@ -200,6 +200,7 @@ When an object overlay includes a `## Rule Table`, the table is mandatory during
 Before calling the distillation complete, confirm:
 
 - `source.md` exists for the same object and snapshot and is current enough for the request
+- closed-style `source.md` snapshots were excluded from distillation targets unless the user explicitly requested an exception
 - any live account/contact search or note lookup used during resolution has been reproduced in the local source layer, or has been excluded from judgment and documented as a coverage gap
 - `summary.md` exists and follows `process/summary.md`
 - large batch manifests, if used, had disjoint write sets and each worker wrote only assigned sibling summaries

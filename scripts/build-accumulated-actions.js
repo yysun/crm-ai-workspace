@@ -7,6 +7,7 @@ const {
   dataRoot,
   readMarkdown,
   normalizeTeamId,
+  isClosedStatus,
 } = require('./layered-artifact-utils');
 
 function parseArgs(argv) {
@@ -118,18 +119,38 @@ function collectSummaryPaths(teamId, fromDate, toDate) {
   return paths.sort();
 }
 
+function collectClosedSourcePaths(teamId, fromDate, toDate) {
+  const paths = [];
+  walkFiles(path.join(dataRoot, teamId), (filePath) => {
+    if (!filePath.endsWith('-source.md')) {
+      return;
+    }
+    const dated = datedObjectFromPath(filePath);
+    if (!dated || dated.date < fromDate || dated.date > toDate) {
+      return;
+    }
+    const markdown = readMarkdown(filePath);
+    if (!isClosedStatus(markdown.frontmatter.status)) {
+      return;
+    }
+    paths.push(filePath);
+  });
+  return paths.sort();
+}
+
 function datedObjectFromPath(filePath) {
   const rel = toPosixRelative(filePath);
-  const match = rel.match(/^data\/(\d+)\/(\d{4})\/(\d{2})\/(\d{2})\/(accounts|contacts)\/([^/]+)\/(?:account|contact)-([^/]+)-summary\.md$/);
+  const match = rel.match(/^data\/(\d+)\/(\d{4})\/(\d{2})\/(\d{2})\/(accounts|contacts)\/([^/]+)\/(?:account|contact)-([^/]+)-(summary|source)\.md$/);
   if (!match) {
     return null;
   }
-  const [, teamId, year, month, day, collection, folderId, stemId] = match;
+  const [, teamId, year, month, day, collection, folderId, stemId, layer] = match;
   return {
     teamId,
     date: `${year}-${month}-${day}`,
     objectType: collection === 'accounts' ? 'account' : 'contact',
     objectId: stemId || folderId,
+    layer,
   };
 }
 
@@ -165,7 +186,14 @@ function objectKey(objectType, objectId, teamId = null) {
   return `${teamId || ''}:${objectType}:${objectId}`;
 }
 
-function indexEvents(summaryPaths) {
+function addEvent(eventsByDate, event) {
+  if (!eventsByDate.has(event.date)) {
+    eventsByDate.set(event.date, []);
+  }
+  eventsByDate.get(event.date).push(event);
+}
+
+function indexEvents(summaryPaths, closedSourcePaths) {
   const eventsByDate = new Map();
 
   for (const summaryPath of summaryPaths) {
@@ -186,7 +214,9 @@ function indexEvents(summaryPaths) {
       team_id: object.teamId,
       object_type: object.objectType,
       object_id: object.objectId,
+      event_order: 0,
       summary_path: toPosixRelative(summaryPath),
+      source_path: null,
       source_date: markdown.frontmatter.source_date || null,
       open_actions: openActions,
       checked_actions: checkedActions,
@@ -194,25 +224,43 @@ function indexEvents(summaryPaths) {
       removal_reason: closesObject ? 'closed-status' : !hasProposedActions ? 'no-supported-actions-in-summary' : 'not-present-in-latest-action',
     };
 
-    if (!eventsByDate.has(event.date)) {
-      eventsByDate.set(event.date, []);
+    addEvent(eventsByDate, event);
+  }
+
+  for (const sourcePath of closedSourcePaths) {
+    const object = datedObjectFromPath(sourcePath);
+    if (!object) {
+      continue;
     }
-    eventsByDate.get(event.date).push(event);
+    const markdown = readMarkdown(sourcePath);
+    const event = {
+      date: object.date,
+      team_id: object.teamId,
+      object_type: object.objectType,
+      object_id: object.objectId,
+      event_order: 1,
+      summary_path: null,
+      source_path: toPosixRelative(sourcePath),
+      source_date: markdown.frontmatter.source_date || object.date,
+      open_actions: [],
+      checked_actions: [],
+      clears_object: true,
+      removal_reason: 'closed-status',
+    };
+    addEvent(eventsByDate, event);
   }
 
   for (const events of eventsByDate.values()) {
     events.sort((a, b) => {
       const left = objectKey(a.object_type, a.object_id, a.team_id);
       const right = objectKey(b.object_type, b.object_id, b.team_id);
-      return left.localeCompare(right) || a.summary_path.localeCompare(b.summary_path);
+      return left.localeCompare(right)
+        || a.event_order - b.event_order
+        || String(a.summary_path || a.source_path || '').localeCompare(String(b.summary_path || b.source_path || ''));
     });
   }
 
   return eventsByDate;
-}
-
-function isClosedStatus(value) {
-  return ['closed', 'complete', 'completed', 'inactive', 'archived'].includes(compact(value).toLowerCase());
 }
 
 function applyEvent(queue, event) {
@@ -252,7 +300,8 @@ function applyEvent(queue, event) {
         ...previous,
         removed_date: event.date,
         removal_reason: checkedKeys.has(actionKey) ? 'checked-or-completed' : event.removal_reason || 'not-present-in-latest-action',
-        latest_summary_path: event.summary_path,
+        latest_summary_path: event.summary_path || previous.latest_summary_path || null,
+        latest_source_path: event.source_path || null,
       });
     }
   }
@@ -540,7 +589,8 @@ function buildTeamSnapshots(args, teamId) {
   const baseSnapshot = findBaseSnapshot(teamId, args.from);
   const base = baseSnapshot ? readJson(baseSnapshot.path) : null;
   const summaryPaths = collectSummaryPaths(teamId, args.from, args.to);
-  const eventsByDate = indexEvents(summaryPaths);
+  const closedSourcePaths = collectClosedSourcePaths(teamId, args.from, args.to);
+  const eventsByDate = indexEvents(summaryPaths, closedSourcePaths);
   const queue = base ? seedQueueFromSnapshot(base) : new Map();
   const written = [];
   const removedWritten = [];
@@ -576,7 +626,7 @@ function buildTeamSnapshots(args, teamId) {
       start_date: base && base.start_date ? base.start_date : args.from,
       as_of_date: date,
       base_snapshot: baseSnapshot ? toPosixRelative(baseSnapshot.path) : null,
-      source_summary_files: events.map((event) => event.summary_path),
+      source_summary_files: events.map((event) => event.summary_path || event.source_path),
       active_action_count: active.length,
       active_object_count: new Set(active.map((action) => objectKey(action.object_type, action.object_id, action.team_id))).size,
       active_actions: active,
@@ -601,6 +651,7 @@ function buildTeamSnapshots(args, teamId) {
     end_date: args.to,
     dry_run: args.dryRun,
     summary_files_read: summaryPaths.length,
+    closed_source_files_read: closedSourcePaths.length,
     snapshots: written.length,
     removed_action_files: removedWritten.length,
     actions_report_files: actionsReportWritten.length,
@@ -617,6 +668,7 @@ function main() {
   const teamResults = collectTeamIds(args).map((teamId) => buildTeamSnapshots(args, teamId));
   const totals = teamResults.reduce((accumulator, result) => {
     accumulator.summary_files_read += result.summary_files_read;
+    accumulator.closed_source_files_read += result.closed_source_files_read;
     accumulator.snapshots += result.snapshots;
     accumulator.removed_action_files += result.removed_action_files;
     accumulator.actions_report_files += result.actions_report_files;
@@ -626,6 +678,7 @@ function main() {
     return accumulator;
   }, {
     summary_files_read: 0,
+    closed_source_files_read: 0,
     snapshots: 0,
     removed_action_files: 0,
     actions_report_files: 0,

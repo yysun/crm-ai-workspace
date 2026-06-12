@@ -93,13 +93,13 @@ Manual trigger phrases for accumulated-action calculation include `accumulated a
 
 Snapshot action rows expose account/contact identity, `action_text`, first/last seen dates, source date, and latest summary path. The normalized action key is internal matching state only and should not be emitted. Do not emit internal status fields; closed status should appear as removal rather than an active row state.
 
-8. Treat removals as first-class facts. A removed action means the accumulator saw a source-backed transition: a checked action, a closed-status summary, a latest summary that no longer includes the action, or a same-account/contact dated summary with no supported actions.
+8. Treat removals as first-class facts. A removed action means the accumulator saw a source-backed transition: a checked action, a closed-status summary or source, a latest summary that no longer includes the action, or a same-account/contact dated summary with no supported actions.
 9. Do not infer removals from silence. If no newer same-account/contact summary exists, the prior active action remains carried forward in the accumulated snapshot.
 
 Removal reasons:
 
 - `checked-or-completed`: the newer summary contains the same action checked off
-- `closed-status`: the newer summary frontmatter is closed, completed, inactive, or archived
+- `closed-status`: the newer summary or source frontmatter is closed, completed, inactive, archived, or otherwise closed-style
 - `no-supported-actions-in-summary`: a newer same-account/contact summary exists without `## Proposed Actions`
 - `not-present-in-latest-action`: a newer same-account/contact summary has proposed actions, but the prior action text no longer appears as an open action
 

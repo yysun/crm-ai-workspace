@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Build deterministic daily action-queue snapshots from existing local `summary.md` artifacts.
+Build deterministic daily action-queue snapshots from existing local `summary.md` artifacts and closed-style `source.md` removal signals.
 
 This process answers:
 
@@ -65,6 +65,15 @@ data/{teamId}/{yyyy}/{mm}/{dd}/contacts/{id}/contact-{id}-summary.md
 
 The absence of `## Proposed Actions` in a same-account/contact dated `summary.md` is meaningful: it means that snapshot has no supported actions.
 
+The script also reads dated local source artifacts only when source frontmatter has a closed-style `status` such as `closed`, `inactive`, `archived`, `completed`, `terminated`, `cancelled`, `disabled`, or `deleted`:
+
+```text
+data/{teamId}/{yyyy}/{mm}/{dd}/accounts/{id}/account-{id}-source.md
+data/{teamId}/{yyyy}/{mm}/{dd}/contacts/{id}/contact-{id}-source.md
+```
+
+Closed source artifacts are removal signals only. They do not create active actions or judgment.
+
 ## Outputs
 
 The script writes one JSON snapshot per day:
@@ -119,7 +128,7 @@ Do not emit:
 
 `action_key` is internal matching state only. It is usually normalized `action_text`, so emitting both is redundant.
 
-Closed, inactive, archived, completed, or otherwise inactive status is not an active state. It should remove the action.
+Closed, inactive, archived, completed, terminated, or otherwise inactive status is not an active state. It should remove the action.
 
 ## Removal Logic
 
@@ -128,11 +137,11 @@ Removal must be explicit. Do not remove an action because no newer artifact exis
 An action is removed only when the accumulator sees one of these source-backed transitions:
 
 - `checked-or-completed`: a newer summary contains the same action checked off.
-- `closed-status`: a newer summary has closed-style frontmatter such as `closed`, `complete`, `completed`, `inactive`, or `archived`.
+- `closed-status`: a newer summary or source has closed-style frontmatter such as `closed`, `complete`, `completed`, `inactive`, `archived`, or `terminated`.
 - `no-supported-actions-in-summary`: a newer same-account/contact summary exists without `## Proposed Actions`.
 - `not-present-in-latest-action`: a newer same-account/contact summary has proposed actions, but the prior action text no longer appears as an open action.
 
-When distillation marks an account or contact inactive and omits `## Proposed Actions`, all prior open actions for that same account/contact should be removed through `closed-status` or `no-supported-actions-in-summary`, depending on the refreshed summary frontmatter and sections.
+When source generation marks an account or contact inactive or closed, all prior open actions for that same account/contact should be removed through `closed-status` even though the inactive object is excluded from normal distillation.
 
 Rows in `changes_on_date.removed` should include the prior action fields plus:
 
