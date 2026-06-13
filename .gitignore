@@ -18,7 +18,8 @@ yarn-error.log*
 
 # IDE specific files
 .idea/
-.vscode/
+.vscode/*
+!.vscode/settings.json
 *.swp
 *.swo
 .DS_Store
