@@ -146,9 +146,10 @@ Use this protocol when the requested distillation scope is too large for one age
 3. Split the manifest into batches of up to 100 objects. Tail batches may be smaller.
 4. If the user explicitly approves parallel agents, assign each worker one batch and a disjoint write set. Workers may write only assigned sibling `*-summary.md` files.
 5. Workers must read assigned source files and author summary content directly from this process, `process/summary.md`, section guides, object overlays, and any needed scenario file. Workers may use scripts only for listing/checking assigned paths and validation.
-6. Workers must not run accumulated-action rebuilds, rebuild `data/index/`, update progress notes, edit scripts, or touch unrelated files.
-7. The parent agent reconciles completed batches by running the target audit, full validation, accumulated-action rebuilds once per affected team/date range, and `scripts/build-data-index.js`.
-8. Completion requires zero remaining audit targets for the requested scope and zero validation failures.
+6. If a worker authors multiple summaries in a single batch handoff file, the file must contain complete `summary-target` Markdown blocks. `scripts/split-agent-authored-summaries.js` may then split those completed blocks into sibling `*-summary.md` files after validating target path, frontmatter, required sections, evidence bullets, and source-file existence. The splitter copies agent-authored text byte-for-byte; it must not synthesize, rewrite, fill, or improve judgment.
+7. Workers must not run accumulated-action rebuilds, rebuild `data/index/`, update progress notes, edit scripts, or touch unrelated files.
+8. The parent agent reconciles completed batches by running the target audit, full validation, accumulated-action rebuilds once per affected team/date range, and `scripts/build-data-index.js`.
+9. Completion requires zero remaining audit targets for the requested scope and zero validation failures.
 
 Do not use script-authored summaries as a shortcut. If summaries were created by a script, template, mechanical migration, or bulk transform, remove or replace them with agent-authored summaries before calling the run valid. Structural validation is necessary but not sufficient; the workflow must also preserve agent-authored judgment from the current evidence layer.
 
