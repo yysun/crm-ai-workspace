@@ -33,6 +33,7 @@ Do not create a script that runs this whole process end to end.
 Allowed deterministic scripts:
 
 - `node scripts/refresh-crm-data.js`
+- `node scripts/download-data-sql.js`
 - `node scripts/distillation-find-refresh-targets.js`
 - `node scripts/load-distillation-batch.js`
 - `node scripts/distillation-validate-outputs.js`
@@ -104,6 +105,8 @@ Read object overlays required by distillation:
 ```text
 node scripts/refresh-crm-data.js
 ```
+
+`refresh-crm-data.js` uses SQL Server as the raw export source when `SQL_SERVER`, `SQL_DATABASE`, `SQL_USER`, and `SQL_PASSWORD` are present. Use `node scripts/refresh-crm-data.js --source=api` only when the API route is intentionally being checked. Use `--source=sql` to force SQL explicitly.
 
 3. Audit distillation coverage:
 

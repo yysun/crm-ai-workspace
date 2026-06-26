@@ -1,0 +1,13 @@
+{
+  "name": "crm-ai-workspace",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "refresh": "node scripts/refresh-crm-data.js",
+    "download:api": "node scripts/download-data.js",
+    "download:sql": "node scripts/download-data-sql.js"
+  },
+  "dependencies": {
+    "mssql": "^12.6.0"
+  }
+}

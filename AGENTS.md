@@ -55,7 +55,8 @@ Validation expectation: do not claim a workflow is validated unless the relevant
 
 ## File Map
 
-- `scripts/refresh-crm-data.js`: end-to-end CRM refresh entrypoint that runs the raw API download, dated export expansion, source regeneration, and routing-index rebuild workflow.
+- `scripts/refresh-crm-data.js`: end-to-end CRM refresh entrypoint that runs the configured raw export download, dated export expansion, source regeneration, and routing-index rebuild workflow. It uses SQL Server when `SQL_SERVER`, `SQL_DATABASE`, `SQL_USER`, and `SQL_PASSWORD` are present; use `--source=api` only when intentionally checking the API path.
+- `scripts/download-data-sql.js`: SQL Server raw export helper that reads `SQL_SERVER`, `SQL_DATABASE`, `SQL_USER`, and `SQL_PASSWORD` from `.env`, exports notes/accounts/contacts into the existing `data/raw/` JSON contract, and preserves the legacy default team mirror files used by downstream date-tree processing.
 - `scripts/search-index.js`: local read-only index search helper over `data/index/` for exact name lookup, token fallback, type filtering, source coverage filtering, open-action filtering, JSON output, and path-oriented routing output. Use this before API lookup for ordinary account/contact resolution.
 - `scripts/search-crm.js`: gated read-only CRM lookup helper that requires `.env` or environment `AIW_ENABLE_CRM_API=1` before it reads `CRM_BASE_URL` and `CRM_ACCESS_TOKEN`, calls documented account/contact search endpoints from `api.yaml`, and can fetch related account/contact notes for inspection.
 - `scripts/build-date-tree.js`: expands local CRM exports into team-scoped dated account/contact and note files under `data/{teamId}/{yyyy}/{mm}/{dd}/`. CRM team `-1` is normalized to workspace team `0`.
@@ -99,7 +100,7 @@ Validation expectation: do not claim a workflow is validated unless the relevant
 
 Agents may use documented read-only CRM API helper scripts for lookup, disambiguation, and note inspection only when `AIW_ENABLE_CRM_API=1` is set. The durable evidence boundary for layered knowledge remains the local generated `*-source.md` file.
 
-When the user asks for new, fresh, latest, refreshed, synced, or downloaded CRM data, use `node scripts/refresh-crm-data.js` as the default refresh entrypoint. Treat those requests as a full local CRM refresh unless the user explicitly asks only for raw/root JSON exports under `data/raw/`.
+When the user asks for new, fresh, latest, refreshed, synced, or downloaded CRM data, use `node scripts/refresh-crm-data.js` as the default refresh entrypoint. Treat those requests as a full local CRM refresh unless the user explicitly asks only for raw/root JSON exports under `data/raw/`. The refresh entrypoint uses SQL Server as the raw export source when the SQL `.env` settings are present; pass `--source=api` only when the API route itself is the thing being tested.
 
 When the user asks to find, search, or look up an account/contact without asking for durable synthesis, use `node scripts/search-index.js` first for local resolution:
 

@@ -16,6 +16,7 @@ Allowed inputs:
 
 - dated local account or contact export files under `data/{teamId}/{yyyy}/{mm}/{dd}/`
 - dated local note export files under `data/{teamId}/{yyyy}/{mm}/{dd}/notes/`
+- raw local CRM exports under `data/raw/` produced by either `scripts/download-data-sql.js` or `scripts/download-data.js` before `scripts/build-date-tree.js`
 - generated `*-source.md` files created by `scripts/generate-source.js`
 - existing older in-place `*-source.md` files only as a comparison aid, never as substitute evidence
 - user-supplied evidence for the current run, when explicitly identified as user-supplied
@@ -28,6 +29,8 @@ Allowed pre-source lookup aids:
 Use `scripts/search-index.js` before API lookup when the local index exists and is current enough. Use `scripts/search-crm.js` only when `AIW_ENABLE_CRM_API=1` is set and the task needs live/fresh/latest data, note inspection, recent-change confirmation, or when local index results are missing, stale, ambiguous, or contradicted by the task.
 
 Lookup aids may identify an object ID, account/contact name, or missing local coverage. They do not belong in `source_files` unless their output is saved as an explicit user-supplied or generated local evidence file for the run.
+
+SQL-backed refresh is allowed as a raw export source when the workspace `.env` provides `SQL_SERVER`, `SQL_DATABASE`, `SQL_USER`, and `SQL_PASSWORD`. The durable evidence boundary remains the generated local dated files and `*-source.md`; direct SQL query output is not source-layer evidence until it has been exported through the raw/date-tree/source pipeline.
 
 Do not use chat history, prior insights, or prior actions as evidence unless the same information is present in the generated source layer or explicitly provided by the user for this run.
 
