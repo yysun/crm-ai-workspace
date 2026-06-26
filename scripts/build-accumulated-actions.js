@@ -233,12 +233,26 @@ function removePurposeClause(actionInstruction) {
   return compact(actionInstruction.replace(/\s+Purpose:\s+[\s\S]*$/i, ''));
 }
 
+function sentenceBoundaryIndex(text) {
+  const value = String(text || '');
+  const boundaryPattern = /[.!?](?=\s|$)/g;
+  let match;
+  while ((match = boundaryPattern.exec(value)) !== null) {
+    const before = value.slice(0, match.index);
+    if (/\b(?:[A-Z]|St|Mr|Ms|Mrs|Dr|Jr|Sr|Prof|Inc|Ltd|Co|Corp|No)$/.test(before)) {
+      continue;
+    }
+    return match.index;
+  }
+  return -1;
+}
+
 function deriveActionTitle(actionText) {
   const { action_instruction: actionInstruction } = splitActionCategory(actionText);
   const withoutPurpose = removePurposeClause(actionInstruction);
   const hasPurpose = /\s+Purpose:\s+/i.test(actionInstruction);
-  const firstSentence = hasPurpose ? null : withoutPurpose.match(/^(.+?[.!?])(?:\s|$)/);
-  const candidate = firstSentence ? firstSentence[1] : withoutPurpose;
+  const boundaryIndex = hasPurpose ? -1 : sentenceBoundaryIndex(withoutPurpose);
+  const candidate = boundaryIndex >= 0 ? withoutPurpose.slice(0, boundaryIndex + 1) : withoutPurpose;
   return truncate(candidate.replace(/[.!?]+$/g, ''), 160);
 }
 
@@ -289,7 +303,7 @@ function indexEvents(summaryPaths, closedSourcePaths) {
       open_actions: openActions,
       checked_actions: checkedActions,
       clears_object: closesObject || openActions.length === 0,
-      removal_reason: closesObject ? 'closed-status' : !hasProposedActions ? 'no-supported-actions-in-summary' : 'not-present-in-latest-action',
+      removal_reason: closesObject ? 'closed-status' : !hasProposedActions ? 'no-longer-supported-by-summary' : 'replaced-by-new-summary-action',
     };
 
     addEvent(eventsByDate, event);
@@ -369,7 +383,7 @@ function applyEvent(queue, event) {
       removed.push({
         ...previous,
         removed_date: event.date,
-        removal_reason: checkedKeys.has(actionKey) ? 'checked-or-completed' : event.removal_reason || 'not-present-in-latest-action',
+        removal_reason: checkedKeys.has(actionKey) ? 'checked-or-completed' : event.removal_reason || 'replaced-by-new-summary-action',
         latest_summary_path: event.summary_path || previous.latest_summary_path || null,
         latest_source_path: event.source_path || null,
       });

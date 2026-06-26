@@ -33,14 +33,22 @@ assert(wolstencroftItem, 'expected Wolstencroft account 101 payload');
 const { payload } = wolstencroftItem;
 assert.strictEqual(payload.actionCategory, 'relationship owner review');
 assert.strictEqual(payload.actionTitle, "Confirm Wolstencroft's leadership coverage after Roman St. Germain's resignation");
-assert.match(payload.actionText, /Purpose:/);
+assert.doesNotMatch(payload.actionText, /Purpose:/);
 assert.match(payload.traceMarkdown, /#### Source note evidence/);
 assert.match(payload.traceMarkdown, /Note: 2232/);
 assert.doesNotMatch(payload.traceMarkdown, /####\s+Insight/i);
 assert.doesNotMatch(payload.traceMarkdown, /####\s+Tensions/i);
 assert.doesNotMatch(payload.traceMarkdown, /####\s+Memory/i);
+assert.deepStrictEqual(payloadContractWarnings([wolstencroftItem]), []);
 
-const warnings = payloadContractWarnings([wolstencroftItem]).map((warning) => warning.warning);
+const legacyPayload = {
+  inputPath: wolstencroftActionsPath,
+  payload: {
+    ...payload,
+    actionText: "Confirm Wolstencroft's leadership coverage after Roman St. Germain's resignation. Purpose: protect continuity and assess REW.ca exposure.",
+  },
+};
+const warnings = payloadContractWarnings([legacyPayload]).map((warning) => warning.warning);
 assert(warnings.includes('purpose-clause-in-action-text'), 'expected Purpose clause warning');
 assert(warnings.includes('possible-compound-action-purpose-and'), 'expected compound-action warning');
 

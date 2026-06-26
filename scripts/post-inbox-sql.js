@@ -32,7 +32,7 @@ const { buildPayloadsForFiles, payloadContractWarnings } = require('./post-inbox
 
 const workspaceRoot = path.resolve(__dirname, '..');
 const envFilePath = path.join(workspaceRoot, '.env');
-const staleRemovalReason = 'not-present-in-latest-action';
+const staleRemovalReason = 'stale-missing-from-current-queue';
 
 const fieldLimits = {
   status: 32,

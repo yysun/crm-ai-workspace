@@ -399,12 +399,26 @@ function removePurposeClause(actionInstruction) {
   return compact(actionInstruction.replace(/\s+Purpose:\s+[\s\S]*$/i, ''));
 }
 
+function sentenceBoundaryIndex(text) {
+  const value = String(text || '');
+  const boundaryPattern = /[.!?](?=\s|$)/g;
+  let match;
+  while ((match = boundaryPattern.exec(value)) !== null) {
+    const before = value.slice(0, match.index);
+    if (/\b(?:[A-Z]|St|Mr|Ms|Mrs|Dr|Jr|Sr|Prof|Inc|Ltd|Co|Corp|No)$/.test(before)) {
+      continue;
+    }
+    return match.index;
+  }
+  return -1;
+}
+
 function deriveActionTitle(actionText) {
   const { actionInstruction } = splitActionCategory(actionText);
   const withoutPurpose = removePurposeClause(actionInstruction);
   const hasPurpose = /\s+Purpose:\s+/i.test(actionInstruction);
-  const firstSentence = hasPurpose ? null : withoutPurpose.match(/^(.+?[.!?])(?:\s|$)/);
-  const candidate = firstSentence ? firstSentence[1] : withoutPurpose;
+  const boundaryIndex = hasPurpose ? -1 : sentenceBoundaryIndex(withoutPurpose);
+  const candidate = boundaryIndex >= 0 ? withoutPurpose.slice(0, boundaryIndex + 1) : withoutPurpose;
   return truncate(candidate.replace(/[.!?]+$/g, ''), actionTitleMaxLength);
 }
 
@@ -862,8 +876,11 @@ function statusForRemovalReason(reason) {
   switch (reason) {
     case 'checked-or-completed':
       return 'done';
+    case 'replaced-by-new-summary-action':
+    case 'stale-missing-from-current-queue':
     case 'not-present-in-latest-action':
       return 'superseded';
+    case 'no-longer-supported-by-summary':
     case 'no-supported-actions-in-summary':
       return 'no_longer_supported';
     case 'closed-status':

@@ -100,8 +100,9 @@ Removal reasons:
 
 - `checked-or-completed`: the newer summary contains the same action checked off
 - `closed-status`: the newer summary or source frontmatter is closed, completed, inactive, archived, or otherwise closed-style
-- `no-supported-actions-in-summary`: a newer same-account/contact summary exists without `## Proposed Actions`
-- `not-present-in-latest-action`: a newer same-account/contact summary has proposed actions, but the prior action text no longer appears as an open action
+- `no-longer-supported-by-summary`: a newer same-account/contact summary exists without `## Proposed Actions`
+- `replaced-by-new-summary-action`: a newer same-account/contact summary has proposed actions, but the prior action text no longer appears as an open action
+- `stale-missing-from-current-queue`: a SQL Inbox cleanup row was open in the database but absent from the selected current local queue and absent from explicit same-day removed-action records
 
 For `lookback`:
 

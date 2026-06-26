@@ -138,8 +138,8 @@ An action is removed only when the accumulator sees one of these source-backed t
 
 - `checked-or-completed`: a newer summary contains the same action checked off.
 - `closed-status`: a newer summary or source has closed-style frontmatter such as `closed`, `complete`, `completed`, `inactive`, `archived`, or `terminated`.
-- `no-supported-actions-in-summary`: a newer same-account/contact summary exists without `## Proposed Actions`.
-- `not-present-in-latest-action`: a newer same-account/contact summary has proposed actions, but the prior action text no longer appears as an open action.
+- `no-longer-supported-by-summary`: a newer same-account/contact summary exists without `## Proposed Actions`.
+- `replaced-by-new-summary-action`: a newer same-account/contact summary has proposed actions, but the prior action text no longer appears as an open action.
 
 When source generation marks an account or contact inactive or closed, all prior open actions for that same account/contact should be removed through `closed-status` even though the inactive object is excluded from normal distillation.
 
@@ -148,7 +148,7 @@ Rows in `changes_on_date.removed` should include the prior action fields plus:
 ```json
 {
   "removed_date": "2026-01-03",
-  "removal_reason": "not-present-in-latest-action"
+  "removal_reason": "replaced-by-new-summary-action"
 }
 ```
 
@@ -172,7 +172,7 @@ The same removed rows must also be written to the separate removed-actions file 
       "latest_summary_path": "data/0/2026/01/03/accounts/123/account-123-summary.md",
       "source_date": "2026-01-02",
       "removed_date": "2026-01-03",
-      "removal_reason": "not-present-in-latest-action"
+      "removal_reason": "replaced-by-new-summary-action"
     }
   ]
 }

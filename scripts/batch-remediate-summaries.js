@@ -13,10 +13,16 @@
 
 const fs = require('fs');
 const path = require('path');
-const { spawnSync } = require('child_process');
+const { spawn, spawnSync } = require('child_process');
+const {
+  workspaceRoot,
+  readMarkdown,
+  isExcludedSource,
+  formatPath,
+} = require('./layered-artifact-utils');
 
-const workspaceRoot = path.resolve(__dirname, '..');
 const defaultModel = 'gpt-5.5-medium';
+const envFilePath = path.join(workspaceRoot, '.env');
 
 function dateParts(isoDate) {
   const now = new Date(`${isoDate}T00:00:00Z`);
@@ -34,10 +40,13 @@ function parseArgs(argv) {
     team: null,
     batchSize: 100,
     model: defaultModel,
+    reasoningEffort: null,
     manifest: null,
     dryRun: false,
     runWorkers: false,
     parallel: 1,
+    inboxSql: false,
+    workDate: null,
     json: false,
   };
 
@@ -49,6 +58,10 @@ function parseArgs(argv) {
     }
     if (part === '--run-workers') {
       args.runWorkers = true;
+      continue;
+    }
+    if (part === '--inbox-sql') {
+      args.inboxSql = true;
       continue;
     }
     if (part === '--json') {
@@ -111,6 +124,22 @@ function parseArgs(argv) {
       args.model = part.slice('--model='.length);
       continue;
     }
+    if (part === '--reasoning-effort') {
+      args.reasoningEffort = readValue('--reasoning-effort');
+      continue;
+    }
+    if (part.startsWith('--reasoning-effort=')) {
+      args.reasoningEffort = part.slice('--reasoning-effort='.length);
+      continue;
+    }
+    if (part === '--work-date') {
+      args.workDate = readValue('--work-date');
+      continue;
+    }
+    if (part.startsWith('--work-date=')) {
+      args.workDate = part.slice('--work-date='.length);
+      continue;
+    }
     if (part === '--manifest') {
       args.manifest = readValue('--manifest');
       continue;
@@ -122,8 +151,11 @@ function parseArgs(argv) {
     throw new Error(`Unknown option: ${part}`);
   }
 
-  if (!args.from || !args.to) {
+  if (!args.inboxSql && (!args.from || !args.to)) {
     throw new Error('Pass --from=YYYY-MM-DD and --to=YYYY-MM-DD.');
+  }
+  if (args.inboxSql && (args.from || args.to || args.team)) {
+    throw new Error('--inbox-sql builds scope from dbo.Inbox; do not combine it with --from, --to, or --team.');
   }
   if (!Number.isInteger(args.batchSize) || args.batchSize < 1 || args.batchSize > 100) {
     throw new Error('--batch-size must be an integer from 1 to 100.');
@@ -135,6 +167,52 @@ function parseArgs(argv) {
     throw new Error('Use either --dry-run or --run-workers, not both.');
   }
   return args;
+}
+
+function parseEnvValue(rawValue) {
+  const trimmed = rawValue.trim();
+  if (!trimmed) {
+    return '';
+  }
+
+  const quote = trimmed[0];
+  if ((quote === '"' || quote === "'") && trimmed.endsWith(quote)) {
+    return trimmed.slice(1, -1);
+  }
+
+  const commentIndex = trimmed.indexOf(' #');
+  return commentIndex >= 0 ? trimmed.slice(0, commentIndex).trim() : trimmed;
+}
+
+function loadDotEnv(filePath) {
+  if (!fs.existsSync(filePath)) {
+    return;
+  }
+
+  const lines = fs.readFileSync(filePath, 'utf8').split(/\r?\n/);
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#')) {
+      continue;
+    }
+    const normalized = trimmed.startsWith('export ') ? trimmed.slice('export '.length) : trimmed;
+    const equalsIndex = normalized.indexOf('=');
+    if (equalsIndex <= 0) {
+      continue;
+    }
+    const key = normalized.slice(0, equalsIndex).trim();
+    if (!process.env[key]) {
+      process.env[key] = parseEnvValue(normalized.slice(equalsIndex + 1));
+    }
+  }
+}
+
+function requireEnv(name) {
+  const value = process.env[name];
+  if (!value) {
+    throw new Error(`Missing required environment variable: ${name}`);
+  }
+  return value;
 }
 
 function runJson(command, args) {
@@ -149,9 +227,10 @@ function runJson(command, args) {
 }
 
 function defaultManifestPath(args) {
-  const { year, month, day } = dateParts(args.to);
+  const { year, month, day } = dateParts(args.workDate || args.to);
   const suffix = args.team ? `team-${args.team}-` : '';
-  return path.join(workspaceRoot, 'my-work', year, month, day, `summary-remediation-${suffix}${args.from}-to-${args.to}.json`);
+  const scope = args.inboxSql ? 'inbox-sql-current' : `${args.from}-to-${args.to}`;
+  return path.join(workspaceRoot, 'my-work', year, month, day, `summary-remediation-${suffix}${scope}.json`);
 }
 
 function batchId(index) {
@@ -208,9 +287,11 @@ function promptForBatch(manifestPath, batch) {
     `Manifest: ${manifestPath}`,
     `Batch: ${batch.batch_id}`,
     '',
-    'Read AGENTS.md, process/distillation.md, process/summary.md, process/action.md, the object overlay for each assigned source, any relevant scenario process file, each assigned source file, and referenced local note files.',
+    'Read AGENTS.md, process/distillation.md, process/summary.md, process/action.md, process/memory.md, process/tension.md, process/insight.md, the object overlay for each assigned source, any relevant scenario process file, each assigned source file, and referenced local note files.',
     'Write only the sibling summary paths listed below. Do not rebuild indexes, accumulated actions, progress notes, or Inbox rows. Do not write unassigned summaries.',
     'Author every summary directly from current local source evidence. Split compound proposed actions into atomic checkboxes with short first-sentence titles and nested Purpose/Rationale bullets when supported.',
+    'Preserve existing checked checkbox state only when the same supported action still exists. Do not create summaries for inactive or closed source snapshots.',
+    'When finished, report how many assigned summaries were written, skipped, or blocked.',
     '',
     'Assigned write paths:',
     ...batch.write_paths.map((writePath) => `- ${writePath}`),
@@ -237,46 +318,177 @@ function writeManifestAndPrompts(manifest, manifestPath, dryRun) {
 }
 
 function codexCommandForBatch(batch, args) {
-  return ['codex', 'exec', '--model', args.model, '--file', batch.prompt_path];
+  const command = ['codex', 'exec', '--model', args.model];
+  if (args.reasoningEffort) {
+    command.push('-c', `model_reasoning_effort="${args.reasoningEffort}"`);
+  }
+  command.push('--cd', workspaceRoot, '--dangerously-bypass-approvals-and-sandbox');
+  return command;
 }
 
-function launchWorkers(manifest, args) {
-  const results = [];
-  for (const batch of manifest.batches) {
+function launchOneWorker(batch, args) {
+  return new Promise((resolve) => {
     const command = codexCommandForBatch(batch, args);
-    const result = spawnSync(command[0], command.slice(1), {
+    const prompt = fs.readFileSync(path.join(workspaceRoot, batch.prompt_path), 'utf8');
+    const logPath = path.join(workspaceRoot, path.dirname(batch.prompt_path), `${batch.batch_id}.log`);
+    const logStream = fs.createWriteStream(logPath, { flags: 'w' });
+    const child = spawn(command[0], command.slice(1), {
       cwd: workspaceRoot,
-      encoding: 'utf8',
-      stdio: 'inherit',
+      stdio: ['pipe', 'pipe', 'pipe'],
     });
-    results.push({
-      batch_id: batch.batch_id,
-      status: result.status === 0 ? 'completed' : 'failed',
-      exit_code: result.status,
-      command,
+    child.stdin.end(prompt);
+    child.stdout.pipe(logStream);
+    child.stderr.pipe(logStream);
+    child.on('close', (code) => {
+      logStream.end();
+      resolve({
+        batch_id: batch.batch_id,
+        status: code === 0 ? 'completed' : 'failed',
+        exit_code: code,
+        command,
+        log_path: path.relative(workspaceRoot, logPath).split(path.sep).join('/'),
+      });
     });
-    if (result.status !== 0) {
-      break;
+  });
+}
+
+async function launchWorkers(manifest, args) {
+  const results = [];
+  const pending = [...manifest.batches];
+  const limit = Math.min(args.parallel, pending.length);
+  let failed = false;
+
+  async function runner() {
+    while (pending.length > 0 && !failed) {
+      const batch = pending.shift();
+      const result = await launchOneWorker(batch, args);
+      results.push(result);
+      if (result.status !== 'completed') {
+        failed = true;
+      }
     }
   }
+
+  await Promise.all(Array.from({ length: limit }, () => runner()));
   return results;
 }
 
-function main() {
-  const args = parseArgs(process.argv.slice(2));
-  const auditArgs = ['scripts/distillation-find-refresh-targets.js', `--from=${args.from}`, `--to=${args.to}`];
-  if (args.team) {
-    auditArgs.push(`--team=${args.team}`);
+function getSqlConfig() {
+  loadDotEnv(envFilePath);
+  return {
+    server: requireEnv('SQL_SERVER'),
+    database: requireEnv('SQL_DATABASE'),
+    user: requireEnv('SQL_USER'),
+    password: requireEnv('SQL_PASSWORD'),
+    options: {
+      encrypt: process.env.SQL_ENCRYPT !== 'false',
+      trustServerCertificate: process.env.SQL_TRUST_SERVER_CERTIFICATE !== 'false',
+    },
+  };
+}
+
+async function buildInboxSqlAudit() {
+  let sql;
+  try {
+    sql = require('mssql');
+  } catch {
+    throw new Error('Missing dependency: mssql. Run npm install from the workspace root.');
   }
-  const audit = runJson(process.execPath, auditArgs);
+
+  const pool = await sql.connect(getSqlConfig());
+  try {
+    const result = await pool.request().query(`
+      SELECT
+        SourceSummaryPath AS summaryPath,
+        COUNT(*) AS inboxRows,
+        MIN(TeamId) AS minTeamId,
+        MAX(TeamId) AS maxTeamId,
+        MIN(SourceDate) AS minSourceDate,
+        MAX(SourceDate) AS maxSourceDate
+      FROM dbo.Inbox
+      WHERE SourceSummaryPath IS NOT NULL
+        AND LTRIM(RTRIM(SourceSummaryPath)) <> ''
+      GROUP BY SourceSummaryPath
+      ORDER BY SourceSummaryPath;
+    `);
+    const items = [];
+    const excluded = [];
+    const missingSources = [];
+    const rows = result.recordset || [];
+
+    for (const row of rows) {
+      const summaryPath = String(row.summaryPath || '').trim().replace(/\\/g, '/');
+      const sourcePath = summaryPath.replace(/-summary\.md$/, '-source.md');
+      const absoluteSourcePath = path.join(workspaceRoot, sourcePath);
+      if (!sourcePath.endsWith('-source.md') || !fs.existsSync(absoluteSourcePath)) {
+        missingSources.push({ sourcePath, summaryPath, inboxRows: row.inboxRows });
+        continue;
+      }
+      const source = readMarkdown(absoluteSourcePath);
+      if (isExcludedSource(source)) {
+        excluded.push({
+          sourcePath,
+          summaryPath,
+          status: source.frontmatter.status || null,
+          inboxRows: row.inboxRows,
+        });
+        continue;
+      }
+      items.push({
+        sourcePath,
+        summaryPath,
+        reasons: ['inbox-row-remediation'],
+        inboxRows: row.inboxRows,
+        minTeamId: row.minTeamId,
+        maxTeamId: row.maxTeamId,
+        minSourceDate: row.minSourceDate,
+        maxSourceDate: row.maxSourceDate,
+      });
+    }
+
+    return {
+      scope: {
+        source: 'dbo.Inbox',
+        team: null,
+        year: null,
+        month: null,
+        from: null,
+        to: null,
+      },
+      sourceFiles: rows.length,
+      eligibleSourceFiles: items.length,
+      excludedSourceFiles: excluded.length,
+      targets: items.length,
+      reasonCounts: { 'inbox-row-remediation': items.length },
+      excluded,
+      missingSources,
+      items,
+    };
+  } finally {
+    await pool.close();
+  }
+}
+
+async function main() {
+  const args = parseArgs(process.argv.slice(2));
+  const audit = args.inboxSql
+    ? await buildInboxSqlAudit()
+    : (() => {
+      const auditArgs = ['scripts/distillation-find-refresh-targets.js', `--from=${args.from}`, `--to=${args.to}`];
+      if (args.team) {
+        auditArgs.push(`--team=${args.team}`);
+      }
+      return runJson(process.execPath, auditArgs);
+    })();
   const manifestPath = path.resolve(workspaceRoot, args.manifest || defaultManifestPath(args));
   const manifest = buildManifest(args, audit);
+  manifest.inbox_sql_missing_sources = audit.missingSources || [];
   writeManifestAndPrompts(manifest, manifestPath, args.dryRun);
 
   const commands = manifest.batches.map((batch) => codexCommandForBatch(batch, args));
   let workerResults = [];
   if (args.runWorkers) {
-    workerResults = launchWorkers(manifest, args);
+    workerResults = await launchWorkers(manifest, args);
   }
 
   const result = {
@@ -285,6 +497,7 @@ function main() {
     target_count: manifest.target_count,
     batch_count: manifest.batch_count,
     model: args.model,
+    reasoning_effort: args.reasoningEffort,
     commands,
     worker_results: workerResults,
   };
@@ -301,4 +514,7 @@ function main() {
   }
 }
 
-main();
+main().catch((error) => {
+  console.error(error.message);
+  process.exit(1);
+});

@@ -156,6 +156,9 @@ paths:
                   enum:
                     - checked-or-completed
                     - closed-status
+                    - no-longer-supported-by-summary
+                    - replaced-by-new-summary-action
+                    - stale-missing-from-current-queue
                     - no-supported-actions-in-summary
                     - not-present-in-latest-action
                     - removed
