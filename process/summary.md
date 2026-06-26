@@ -143,6 +143,9 @@ Before calling `summary.md` valid, confirm:
 - Every material judgment is grounded in the same-run `source.md`.
 - Every material judgment remains traceable to a real source file, a real object, and a clear time window.
 - Proposed actions use Markdown checkboxes and remain local recommendations.
+- Proposed action checkboxes are atomic: one checkbox, one independently completable operational job. Split separate confirmation, assessment, proposal, or escalation jobs into separate checkboxes when they can have different owners or completion states.
+- Proposed action checkbox text does not use an inline `Purpose:` clause to combine multiple jobs. Put purpose and rationale in nested bullets under the checkbox.
+- Proposed action checkbox text has a short first sentence suitable for downstream `ActionTitle` derivation after the backticked category prefix is removed.
 - No action metadata appears as top-level sections such as `Rationale`, `Preconditions`, `Franchise Purpose`, or `Not Tasks Yet`.
 - Existing checkbox state was preserved when refreshing the `Proposed Actions` section while supported actions remained.
 - No `action.md` was created during distillation.

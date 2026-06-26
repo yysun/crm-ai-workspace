@@ -55,9 +55,22 @@ paths:
                 sourceDate:
                   type: string
                   format: date
+                actionTitle:
+                  type: string
+                  minLength: 1
+                  maxLength: 160
+                  description: "Short Inbox display title. Stored separately from the full action instruction."
+                actionCategory:
+                  type:
+                    - string
+                    - "null"
+                  maxLength: 80
+                  default: null
+                  description: "Normalized action lane such as retain, clarify, relationship owner review, or legal/commercial review."
                 actionText:
                   type: string
                   minLength: 1
+                  description: "Full action instruction. Do not use category punctuation or Purpose clauses as a title convention."
                 status:
                   type: string
                   enum:
@@ -105,6 +118,7 @@ paths:
                     - "null"
                   maxLength: 12000
                   default: null
+                  description: "Evidence trail only. May include object keys, dates, source report paths, removal context, action item, and bounded local source-note evidence. Must not include Insight, Tensions, Memory, or inferred summary prose."
                 insightText:
                   type:
                     - string
@@ -154,6 +168,7 @@ paths:
               required:
                 - teamId
                 - sourceDate
+                - actionTitle
                 - actionText
                 - sourcePath
                 - sourceMarkdownSection

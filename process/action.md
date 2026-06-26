@@ -27,6 +27,7 @@ Allowed inputs:
 - Prefer a small number of high-leverage actions over a long generic list.
 - Track proposed actions as Markdown checkboxes so a human or future agent can check them off locally.
 - Checking off a local action does not mean an external task exists, an external task is complete, or any external write occurred.
+- Each checkbox must represent exactly one operational job with one owner path and one completion state. Split compound work into separate checkboxes when a sentence asks the operator to confirm one fact and assess a separate risk, unless the two questions are inseparable in the same owner conversation.
 - Prefix each action with an action type: `retain`, `recruit`, `escalate`, `clarify`, `support`, `monitor`, `source correction`, `legal/commercial review`, or `relationship owner review`.
 - Match action posture to team objective before brokerage brand:
   - Team `0`: use `retain`, `support`, `escalate`, `monitor`, `clarify`, or `legal/commercial review` for retention and brokerage-health work; use commercial-program actions only when contact evidence supports them.
@@ -35,6 +36,8 @@ Allowed inputs:
 - If team objective is unavailable, match action posture to brokerage brand by default: Royal LePage brokerages should skew toward `retain`, `support`, `escalate`, or `monitor`; non Royal LePage brokerages should skew toward `recruit`, `clarify`, `monitor`, or `relationship owner review`.
 - If the user request or source evidence is about a contact- or agent-level commercial program, actions may target eligible contacts in either Royal LePage or non Royal LePage brokerages without changing the brokerage-level posture.
 - Every action must state the franchise business purpose, not just the activity.
+- Keep the checkbox's first sentence short enough to become `ActionTitle` after the action-type prefix is removed. Put supporting detail in nested `Purpose`, `Rationale`, or `Preconditions` bullets instead of appending a `Purpose:` clause to the checkbox sentence.
+- Do not use category punctuation as a fake title. The backticked prefix is the normalized category/lane; the action sentence is the work instruction; downstream publishing derives `ActionTitle` from the action sentence.
 
 ## Output Format
 
@@ -43,7 +46,7 @@ Use this structure inside `summary.md`. Do not create `action.md`. Do not add ac
 ```md
 ## Proposed Actions
 
-- [ ] `clarify`: ...
+- [ ] `clarify`: Short action instruction.
   - Purpose: ...
   - Rationale: ...
   - Preconditions: ...
@@ -65,6 +68,8 @@ Use nested metadata only when it adds useful business clarity. Omit empty `Ratio
 Good action is specific, justified, tied to the current situation, and connected to a franchise outcome.
 
 Bad action is generic, overreaching, disconnected from evidence, or silently turns a recommendation into assigned work.
+
+Bad action is also compound: `Confirm X and assess Y` creates ambiguous ownership and completion semantics when X and Y can be completed independently.
 
 ## TTL
 

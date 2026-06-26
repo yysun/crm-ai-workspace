@@ -1,5 +1,17 @@
 #!/usr/bin/env node
 
+/*
+ * Builds deterministic accumulated action queue snapshots from summaries.
+ *
+ * Feature notes:
+ * Reads `## Proposed Actions` checkboxes from sibling `*-summary.md` files,
+ * carries open actions forward, emits same-day removals, and writes the daily
+ * traceback report consumed by Inbox publishers. Recent change: queue rows carry
+ * additive action_title and action_category fields derived from the checkbox
+ * prefix, while action_text remains the original checkbox text for stable
+ * history and audit compatibility.
+ */
+
 const fs = require('fs');
 const path = require('path');
 const {
@@ -168,6 +180,7 @@ function extractActions(markdown) {
     actions.push({
       key: normalizeAction(text),
       text,
+      ...deriveActionFields(text),
       checked: match[1].toLowerCase() === 'x',
     });
   }
@@ -180,6 +193,61 @@ function compact(value) {
 
 function normalizeAction(value) {
   return compact(value).toLowerCase();
+}
+
+const knownActionCategories = [
+  'legal/commercial review',
+  'relationship owner review',
+  'source correction',
+  'clarify',
+  'escalate',
+  'monitor',
+  'recruit',
+  'retain',
+  'support',
+];
+
+function truncate(value, maxLength) {
+  const text = String(value || '').trim();
+  return text.length <= maxLength ? text : text.slice(0, maxLength - 1).trimEnd();
+}
+
+function splitActionCategory(actionText) {
+  const text = compact(actionText);
+  const match = text.match(/^`([^`]+)`\s*:\s*(.+)$/);
+  if (!match) {
+    return {
+      action_category: null,
+      action_instruction: text,
+    };
+  }
+
+  const category = compact(match[1]).toLowerCase();
+  return {
+    action_category: knownActionCategories.includes(category) ? category : null,
+    action_instruction: compact(match[2]) || text,
+  };
+}
+
+function removePurposeClause(actionInstruction) {
+  return compact(actionInstruction.replace(/\s+Purpose:\s+[\s\S]*$/i, ''));
+}
+
+function deriveActionTitle(actionText) {
+  const { action_instruction: actionInstruction } = splitActionCategory(actionText);
+  const withoutPurpose = removePurposeClause(actionInstruction);
+  const hasPurpose = /\s+Purpose:\s+/i.test(actionInstruction);
+  const firstSentence = hasPurpose ? null : withoutPurpose.match(/^(.+?[.!?])(?:\s|$)/);
+  const candidate = firstSentence ? firstSentence[1] : withoutPurpose;
+  return truncate(candidate.replace(/[.!?]+$/g, ''), 160);
+}
+
+function deriveActionFields(actionText) {
+  const { action_category: actionCategory } = splitActionCategory(actionText);
+  return {
+    action_title: deriveActionTitle(actionText),
+    action_category: actionCategory,
+  };
 }
 
 function objectKey(objectType, objectId, teamId = null) {
@@ -279,6 +347,8 @@ function applyEvent(queue, event) {
         object_id: event.object_id,
         team_id: event.team_id,
         action_text: action.text,
+        action_title: action.action_title,
+        action_category: action.action_category,
         first_seen_date: previous ? previous.first_seen_date : event.date,
         last_seen_date: event.date,
         latest_summary_path: event.summary_path,
@@ -379,6 +449,8 @@ function seedQueueFromSnapshot(snapshot) {
       object_id: objectId,
       team_id: action.team_id || snapshot.team_id || null,
       action_text: actionText,
+      action_title: action.action_title || deriveActionTitle(actionText),
+      action_category: action.action_category || splitActionCategory(actionText).action_category,
       first_seen_date: action.first_seen_date || snapshot.start_date || snapshot.as_of_date,
       last_seen_date: action.last_seen_date || snapshot.as_of_date,
       latest_summary_path: action.latest_summary_path || null,

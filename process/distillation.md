@@ -177,6 +177,8 @@ data/{teamId}/{yyyy}/{mm}/{dd}/contacts/{id}/contact-{id}-summary.md
 
 When supported actions exist, keep them in `## Proposed Actions` inside `summary.md` as Markdown checkboxes. When supported actions do not exist, omit `## Proposed Actions`. The accumulated-action script reads summaries directly and detects additions, carries, checked completions, removed actions, and summaries that no longer contain supported actions.
 
+Each proposed-action checkbox must be atomic. Do not combine separate confirmation, assessment, proposal, or escalation jobs into one checkbox when they can have different owners or completion states. Keep the first sentence short enough to become an Inbox `ActionTitle`; put purpose and rationale in nested bullets instead of a `Purpose:` clause on the checkbox line.
+
 When an account or contact becomes inactive, closed, archived, completed, terminated, or otherwise no longer active for franchise follow-up, it is excluded from normal distillation. Do not refresh the summary just to say it is inactive. Rebuild accumulated actions so the closed source snapshot removes old rows with `closed-status`.
 
 ## Scenario Use

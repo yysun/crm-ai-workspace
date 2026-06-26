@@ -13,6 +13,8 @@
  * SQL so it can report the rows that would be closed, inserted, or updated.
  * If a local payload points to an account/contact absent from the SQL database,
  * the script clears that nullable FK while preserving the actionKey and trace.
+ * Recent change: merges ActionTitle and ActionCategory separately from the full
+ * action instruction, and blocks live writes when payload contract warnings exist.
  */
 
 const fs = require('fs');
@@ -26,7 +28,7 @@ try {
   process.exit(1);
 }
 
-const { buildPayloadsForFiles } = require('./post-inbox');
+const { buildPayloadsForFiles, payloadContractWarnings } = require('./post-inbox');
 
 const workspaceRoot = path.resolve(__dirname, '..');
 const envFilePath = path.join(workspaceRoot, '.env');
@@ -34,6 +36,8 @@ const staleRemovalReason = 'not-present-in-latest-action';
 
 const fieldLimits = {
   status: 32,
+  actionTitle: 160,
+  actionCategory: 80,
   sourcePath: 1024,
   sourceActionsReportPath: 1024,
   sourceSummaryPath: 1024,
@@ -444,6 +448,8 @@ function normalizedPayload(rawPayload, args) {
     contactId: optionalInt(rawPayload.contactId),
     sourceDate,
     evidenceDate: rawPayload.evidenceDate || null,
+    actionTitle: truncate(requiredText(rawPayload.actionTitle, 'actionTitle'), fieldLimits.actionTitle),
+    actionCategory: truncate(rawPayload.actionCategory || null, fieldLimits.actionCategory),
     actionText: requiredText(rawPayload.actionText, 'actionText'),
     status: truncate(requiredText(rawPayload.status, 'status'), fieldLimits.status),
     firstSeenDate: rawPayload.firstSeenDate || sourceDate,
@@ -650,6 +656,8 @@ function bindPayload(request, payload) {
   request.input('AccountId', sql.Int, payload.accountId);
   request.input('ContactId', sql.Int, payload.contactId);
   bindDate(request, 'SourceDate', payload.sourceDate, 'sourceDate');
+  request.input('ActionTitle', sql.NVarChar(fieldLimits.actionTitle), payload.actionTitle);
+  request.input('ActionCategory', sql.NVarChar(fieldLimits.actionCategory), payload.actionCategory);
   request.input('ActionText', sql.NVarChar(sql.MAX), payload.actionText);
   request.input('Status', sql.NVarChar(fieldLimits.status), payload.status);
   bindDate(request, 'FirstSeenDate', payload.firstSeenDate, 'firstSeenDate', payload.sourceDate);
@@ -700,6 +708,8 @@ async function mergePayload(transaction, payload) {
         AccountId = @AccountId,
         ContactId = @ContactId,
         SourceDate = @SourceDate,
+        ActionTitle = @ActionTitle,
+        ActionCategory = @ActionCategory,
         ActionText = @ActionText,
         Status = @Status,
         FirstSeenDate = @FirstSeenDate,
@@ -722,6 +732,8 @@ async function mergePayload(transaction, payload) {
         AccountId,
         ContactId,
         SourceDate,
+        ActionTitle,
+        ActionCategory,
         ActionText,
         Status,
         FirstSeenDate,
@@ -746,6 +758,8 @@ async function mergePayload(transaction, payload) {
         @AccountId,
         @ContactId,
         @SourceDate,
+        @ActionTitle,
+        @ActionCategory,
         @ActionText,
         @Status,
         @FirstSeenDate,
@@ -838,6 +852,7 @@ async function main() {
     status: args.status,
   });
   const payloadItems = dedupePayloadItems(rawPayloadItems, args);
+  const contractWarnings = payloadContractWarnings(payloadItems);
   const teamIds = targetSqlTeamIds(args, filePaths, payloadItems);
 
   if (payloadItems.length === 0 && teamIds.length === 0) {
@@ -862,6 +877,8 @@ async function main() {
       files: filePaths,
       target_sql_team_ids: teamIds,
       payloads: payloadItems.length,
+      contract_warning_count: contractWarnings.length,
+      contract_warnings: contractWarnings,
       payload_statuses: countPayloadStatuses(payloadItems),
       payloads_by_team: summarizeByTeam(payloadItems),
       cleared_missing_account_links: linkCleanup.clearedAccounts,
@@ -882,6 +899,15 @@ async function main() {
         console.log(`Files: ${filePaths.length}`);
         console.log(`Target SQL teams: ${teamIds.join(', ')}`);
         console.log(`Payloads: ${payloadItems.length} ${JSON.stringify(baseResult.payload_statuses)}`);
+        console.log(`Contract warnings: ${contractWarnings.length}`);
+        if (!args.quiet && contractWarnings.length > 0) {
+          for (const warning of contractWarnings.slice(0, 25)) {
+            console.log(`- contract ${warning.inputPath} ${warning.actionKey}: ${warning.warning}`);
+          }
+          if (contractWarnings.length > 25) {
+            console.log(`... ${contractWarnings.length - 25} more contract warnings`);
+          }
+        }
         console.log(`Cleared missing SQL account links: ${linkCleanup.clearedAccounts}`);
         console.log(`Cleared missing SQL contact links: ${linkCleanup.clearedContacts}`);
         console.log(`Existing open rows in target teams: ${existingOpenRows.length}`);
@@ -898,6 +924,10 @@ async function main() {
         }
       }
       return;
+    }
+
+    if (contractWarnings.length > 0) {
+      throw new Error(`SQL Inbox payload contract failed with ${contractWarnings.length} warning(s). Run --dry-run --json to inspect action rows before live writing.`);
     }
 
     const writeResult = await writeChanges(pool, staleRows, payloadItems, args);

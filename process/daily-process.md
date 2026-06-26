@@ -10,7 +10,7 @@ download data, distill today, post inbox
 
 Legacy wording such as `post actions and post inbox` means rebuild accumulated action state and publish the operational Inbox queue. It does not mean post the CRM `Actions` archive unless the user explicitly asks for archived daily snapshots.
 
-This is a process contract, not a scriptable command. It combines deterministic data refresh and posting helpers with agent-authored distillation. The agent owns orchestration, judgment, validation, and the decision to stop when the evidence boundary is not satisfied.
+This is a process contract with an allowed orchestrator. Deterministic scripts may coordinate refresh, audits, Codex CLI worker dispatch, validation, accumulated-action rebuilds, index rebuilds, dry-runs, and gated Inbox posting. They must not draft, rewrite, or mechanically split `summary.md` judgment. Agent workers own distillation from source evidence.
 
 The process answers: refresh the local CRM evidence, bring the judgment layer current for the run, rebuild the action queue, and publish enriched checkbox-level work items to CRM `Inbox`. Local accumulated-action files remain the deterministic state and audit source. CRM `Actions` posting is archive-only and is not part of the default daily operator queue.
 
@@ -26,9 +26,9 @@ Use this process when the user asks for the full daily publish run with wording 
 
 If the user asks only for daily triage briefing or deck output, use `process/daily-triage.md` instead. If the user asks only to rebuild action state, use `process/accumulated-actions.md`.
 
-## Non-Script Boundary
+## Orchestration Boundary
 
-Do not create a script that runs this whole process end to end.
+An end-to-end script is allowed only as a coordinator and guardrail layer. It may call the deterministic helpers and Codex CLI worker batches, stop on failed checks, and print the exact live publish command. It must not author summary prose or claim distillation succeeded without worker-authored summaries and validation.
 
 Allowed deterministic scripts:
 
@@ -41,11 +41,15 @@ Allowed deterministic scripts:
 - `node scripts/build-data-index.js`
 - `node scripts/post-accumulated-actions.js`
 - `node scripts/post-inbox.js`
+- `node scripts/post-inbox-sql.js`
+- `node scripts/batch-remediate-summaries.js`
+- `node scripts/run-daily-inbox-pipeline.js`
 
 Prohibited automation:
 
 - scripts, templates, migrations, or bulk transforms that draft or rewrite `summary.md`
 - scripts that pretend to complete distillation
+- scripts that split compound actions or rewrite `*-summary.md` by heuristic instead of handing assigned source files to agent workers
 - posting inbox rows or archived action snapshots while required summaries are missing, stale, invalid, or known to be non-agent-authored
 
 Distillation must be performed by agents from current `*-source.md` files under `process/distillation.md`, `process/summary.md`, the object overlays, section guides, and any relevant scenario process.
@@ -98,6 +102,20 @@ Read object overlays required by distillation:
 - `process/objects/contact.md`
 
 ## Run Sequence
+
+Preferred coordinator command for a dry-run local-only pipeline:
+
+```text
+node scripts/run-daily-inbox-pipeline.js --date={yyyy-mm-dd} --local-only --dry-run
+```
+
+Preferred coordinator command for a refresh-backed dry-run pipeline:
+
+```text
+node scripts/run-daily-inbox-pipeline.js --date={yyyy-mm-dd} --refresh --dry-run
+```
+
+Use the lower-level sequence below when the coordinator stops or when manual control is required.
 
 1. Confirm the as-of date and any user-specified team/date/object scope.
 2. Refresh local CRM data:

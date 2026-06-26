@@ -9,8 +9,9 @@
  * checkbox action, deduped by a stable actionKey. It also reads the matching
  * removed-actions-YYYY-MM-DD.json file by default so Inbox can close stale work
  * items when local accumulated state retires them. Recent change: traceMarkdown
- * is an evidence trail only; judgment text stays in the separate insight,
- * tensions, and memory fields.
+ * is an evidence trail only; actionTitle/actionCategory are carried separately
+ * from the full action instruction, and judgment text stays in the separate
+ * insight, tensions, and memory fields.
  */
 
 const crypto = require('crypto');
@@ -24,6 +25,20 @@ const postRoutePath = '/api/data/inbox';
 const sourceMarkdownSectionMaxLength = 512;
 const traceMarkdownMaxLength = 12000;
 const traceTextMaxLength = 4000;
+const actionTitleMaxLength = 160;
+const actionCategoryMaxLength = 80;
+const noteEvidenceMaxLength = 650;
+const knownActionCategories = [
+  'legal/commercial review',
+  'relationship owner review',
+  'source correction',
+  'clarify',
+  'escalate',
+  'monitor',
+  'recruit',
+  'retain',
+  'support',
+];
 
 function parseEnvValue(rawValue) {
   const trimmed = rawValue.trim();
@@ -109,6 +124,8 @@ Options:
   --file PATH         Markdown file to read. Can be used multiple times.
   --files-from PATH   Read newline-delimited markdown file paths. Use - for stdin.
   --date YYYY-MM-DD   Daily triage date to import across all teams. Default: today.
+  --team ID           Workspace team ID to include. Can be used multiple times.
+  --teams A,B         Workspace team IDs to include, comma-separated.
   --include-checked   Include checked checkbox actions as status=done. Default: unchecked only.
   --skip-removed      Do not post same-day removed actions from removed-actions-YYYY-MM-DD.json.
   --status VALUE      Status for unchecked actions. Default: open.
@@ -119,6 +136,7 @@ Options:
   --progress-every N  Print progress every N posted payloads. Default: 25.
   --quiet             Print only final counts.
   --json              Print JSON result instead of a compact summary.
+  --summary-json      Print compact JSON counts and contract warnings without full payload bodies.
   -h, --help          Show this help.
 
 Environment:
@@ -132,6 +150,7 @@ function parseArgs(argv) {
     filePaths: [],
     filesFrom: null,
     date: null,
+    workspaceTeams: [],
     includeChecked: false,
     skipRemoved: false,
     status: 'open',
@@ -139,6 +158,7 @@ function parseArgs(argv) {
     continueOnError: false,
     dryRun: false,
     json: false,
+    summaryJson: false,
     quiet: false,
     progressEvery: 25,
     help: false,
@@ -157,6 +177,11 @@ function parseArgs(argv) {
     }
     if (part === '--json') {
       args.json = true;
+      continue;
+    }
+    if (part === '--summary-json') {
+      args.json = true;
+      args.summaryJson = true;
       continue;
     }
     if (part === '--quiet') {
@@ -222,6 +247,32 @@ function parseArgs(argv) {
       args.date = part.slice('--date='.length);
       continue;
     }
+    if (part === '--team') {
+      const value = argv[index + 1];
+      if (!value) {
+        throw new Error('Missing value after --team.');
+      }
+      args.workspaceTeams.push(...parseIntegerList(value, '--team'));
+      index += 1;
+      continue;
+    }
+    if (part.startsWith('--team=')) {
+      args.workspaceTeams.push(...parseIntegerList(part.slice('--team='.length), '--team'));
+      continue;
+    }
+    if (part === '--teams') {
+      const value = argv[index + 1];
+      if (!value) {
+        throw new Error('Missing value after --teams.');
+      }
+      args.workspaceTeams.push(...parseIntegerList(value, '--teams'));
+      index += 1;
+      continue;
+    }
+    if (part.startsWith('--teams=')) {
+      args.workspaceTeams.push(...parseIntegerList(part.slice('--teams='.length), '--teams'));
+      continue;
+    }
     if (part === '--status') {
       const value = argv[index + 1];
       if (!value) {
@@ -267,6 +318,7 @@ function parseArgs(argv) {
   if (!/^[A-Za-z0-9_-]+$/.test(args.status)) {
     throw new Error('--status must be a simple status value.');
   }
+  args.workspaceTeams = [...new Set(args.workspaceTeams)];
 
   return args;
 }
@@ -293,6 +345,20 @@ function validateIsoDate(value, label) {
   }
 }
 
+function parseIntegerList(value, label) {
+  const rawItems = String(value).split(',').map((item) => item.trim()).filter(Boolean);
+  if (rawItems.length === 0) {
+    throw new Error(`${label} must include at least one team ID.`);
+  }
+  return rawItems.map((item) => {
+    const parsed = Number(item);
+    if (!Number.isInteger(parsed)) {
+      throw new Error(`${label} contains a non-integer team ID: ${item}`);
+    }
+    return parsed;
+  });
+}
+
 function compact(value) {
   return String(value || '').replace(/\s+/g, ' ').trim();
 }
@@ -303,6 +369,73 @@ function truncate(value, maxLength) {
     return text;
   }
   return text.slice(0, maxLength - 1).trimEnd();
+}
+
+function normalizeCategory(value) {
+  const category = compact(value).toLowerCase();
+  return knownActionCategories.includes(category) ? category : null;
+}
+
+function splitActionCategory(actionText) {
+  const text = compact(actionText);
+  const match = text.match(/^`([^`]+)`\s*:\s*(.+)$/);
+  if (!match) {
+    return {
+      actionCategory: null,
+      actionInstruction: text,
+      rawCategory: null,
+    };
+  }
+
+  const actionCategory = normalizeCategory(match[1]);
+  return {
+    actionCategory,
+    actionInstruction: compact(match[2]) || text,
+    rawCategory: compact(match[1]) || null,
+  };
+}
+
+function removePurposeClause(actionInstruction) {
+  return compact(actionInstruction.replace(/\s+Purpose:\s+[\s\S]*$/i, ''));
+}
+
+function deriveActionTitle(actionText) {
+  const { actionInstruction } = splitActionCategory(actionText);
+  const withoutPurpose = removePurposeClause(actionInstruction);
+  const hasPurpose = /\s+Purpose:\s+/i.test(actionInstruction);
+  const firstSentence = hasPurpose ? null : withoutPurpose.match(/^(.+?[.!?])(?:\s|$)/);
+  const candidate = firstSentence ? firstSentence[1] : withoutPurpose;
+  return truncate(candidate.replace(/[.!?]+$/g, ''), actionTitleMaxLength);
+}
+
+function deriveActionContract(actionText) {
+  const { actionCategory, actionInstruction } = splitActionCategory(actionText);
+  return {
+    actionTitle: deriveActionTitle(actionText),
+    actionCategory,
+    actionText: actionInstruction,
+  };
+}
+
+function compoundActionWarnings(payload) {
+  const warnings = [];
+  const actionText = compact(payload.actionText);
+  if (!payload.actionTitle) {
+    warnings.push('missing-action-title');
+  }
+  if (!payload.actionCategory) {
+    warnings.push('missing-action-category');
+  }
+  if (/Purpose:/i.test(actionText)) {
+    warnings.push('purpose-clause-in-action-text');
+  }
+  if (/Purpose:/i.test(actionText) && /\band\b/i.test(actionText)) {
+    warnings.push('possible-compound-action-purpose-and');
+  }
+  if (/[.;]\s*(Confirm|Assess|Review|Propose|Clarify|Monitor|Escalate|Support|Retain|Recruit)\b/i.test(actionText)) {
+    warnings.push('possible-multiple-action-verbs');
+  }
+  return warnings;
 }
 
 function toRelativePath(filePath) {
@@ -367,6 +500,14 @@ function inferWorkspaceTeamId(inputPath) {
     throw new Error(`Could not infer teamId from path: ${relativePath}`);
   }
   return Number(match[1]);
+}
+
+function filterFilesByWorkspaceTeams(filePaths, workspaceTeams) {
+  if (!workspaceTeams || workspaceTeams.length === 0) {
+    return filePaths;
+  }
+  const selected = new Set(workspaceTeams.map(Number));
+  return filePaths.filter((filePath) => selected.has(inferWorkspaceTeamId(path.resolve(workspaceRoot, filePath))));
 }
 
 function apiTeamIdFromWorkspaceTeam(workspaceTeamId) {
@@ -477,6 +618,69 @@ function readJsonIfExists(filePath) {
   return JSON.parse(fs.readFileSync(filePath, 'utf8'));
 }
 
+function firstParagraph(value) {
+  return compact(String(value || '').split(/\n\s*\n/)[0] || '');
+}
+
+function noteEvidenceFromJson(notePath) {
+  const note = readJsonIfExists(notePath);
+  if (!note) {
+    return null;
+  }
+
+  const noteId = note.Id || note.id || path.basename(path.dirname(notePath)).replace(/^note-/, '');
+  const noteDate = String(note.CreatedAt || note.createdAt || note.UpdatedAt || note.updatedAt || '').slice(0, 10) || 'unknown';
+  const title = compact(note.Title || note.title || '');
+  const content = truncate(firstParagraph(note.Content || note.content || ''), noteEvidenceMaxLength);
+  if (!title && !content) {
+    return null;
+  }
+
+  const relativePath = toRelativePath(notePath);
+  const lines = [
+    '#### Source note evidence',
+    '',
+    `- Note: ${noteId}`,
+    `- Date: ${noteDate}`,
+    `- Path: ${relativePath}`,
+  ];
+  if (title) {
+    lines.push(`- Title: ${truncate(title, 240)}`);
+  }
+  if (content) {
+    lines.push(`- Excerpt: ${content}`);
+  }
+  return lines.join('\n');
+}
+
+function sourceMarkdownPathsForSummary(summaryPath) {
+  const absoluteSummaryPath = absoluteWorkspacePath(summaryPath);
+  if (!absoluteSummaryPath || !fs.existsSync(absoluteSummaryPath)) {
+    return [];
+  }
+  const summary = readMarkdown(absoluteSummaryPath);
+  return (summary.frontmatter.source_files || [])
+    .filter((sourcePath) => String(sourcePath).endsWith('-source.md'))
+    .map((sourcePath) => absoluteWorkspacePath(sourcePath))
+    .filter((sourcePath) => sourcePath && fs.existsSync(sourcePath));
+}
+
+function localNoteEvidenceForSummary(summaryPath) {
+  for (const sourcePath of sourceMarkdownPathsForSummary(summaryPath)) {
+    const source = readMarkdown(sourcePath);
+    for (const relativeSourceFile of source.frontmatter.source_files || []) {
+      if (!String(relativeSourceFile).endsWith('.json') || !/\/notes\/\d+\//.test(String(relativeSourceFile))) {
+        continue;
+      }
+      const evidence = noteEvidenceFromJson(absoluteWorkspacePath(relativeSourceFile));
+      if (evidence) {
+        return evidence;
+      }
+    }
+  }
+  return null;
+}
+
 function activeActionMetadataByKey(inputPath, isoDate) {
   const snapshot = readJsonIfExists(accumulatedActionsPathForInput(inputPath, isoDate));
   const rows = snapshot && Array.isArray(snapshot.active_actions) ? snapshot.active_actions : [];
@@ -489,6 +693,8 @@ function activeActionMetadataByKey(inputPath, isoDate) {
     metadata.set(actionLookupKey(row.team_id, row.object_type, row.object_id, actionText), {
       latestSummaryPath: row.latest_summary_path || null,
       evidenceDate: row.source_date || null,
+      actionTitle: row.action_title || null,
+      actionCategory: row.action_category || null,
     });
   }
   return metadata;
@@ -571,6 +777,7 @@ function traceFieldsForSection(section) {
 
 function activeTraceMarkdown(section, objectType, objectId, actionLine, metadata, sourceActionsReportPath) {
   const evidenceDate = metadata.evidenceDate || section.sourceDate || null;
+  const noteEvidence = localNoteEvidenceForSummary(metadata.latestSummaryPath);
   return truncate([
     `### Evidence trail for ${objectType}:${objectId}`,
     '',
@@ -580,11 +787,13 @@ function activeTraceMarkdown(section, objectType, objectId, actionLine, metadata
     `- Source date: ${section.sourceDate || 'unknown'}`,
     `- Evidence date: ${evidenceDate || 'unknown'}`,
     `- Source actions report: ${sourceActionsReportPath}`,
+    noteEvidence ? '' : null,
+    noteEvidence,
     '',
     '#### Action item',
     '',
     actionLine,
-  ].join('\n'), traceMarkdownMaxLength);
+  ].filter((line) => line !== null && line !== undefined).join('\n'), traceMarkdownMaxLength);
 }
 
 function parseInboxPayloads(markdown, inputPath, args) {
@@ -619,6 +828,7 @@ function parseInboxPayloads(markdown, inputPath, args) {
 
       const metadata = activeMetadata.get(actionLookupKey(workspaceTeamId, objectType, objectId, parsedAction.actionText)) || {};
       const trimmedActionLine = actionLine.trim();
+      const actionContract = deriveActionContract(parsedAction.actionText);
 
       payloads.push({
         teamId,
@@ -626,7 +836,9 @@ function parseInboxPayloads(markdown, inputPath, args) {
         contactId: objectType === 'contact' ? objectId : null,
         sourceDate: asOfDate,
         evidenceDate: metadata.evidenceDate || section.sourceDate,
-        actionText: parsedAction.actionText,
+        actionTitle: metadata.actionTitle || actionContract.actionTitle,
+        actionCategory: metadata.actionCategory || actionContract.actionCategory,
+        actionText: actionContract.actionText,
         status: parsedAction.checked ? 'done' : args.status,
         firstSeenDate: section.firstSeenDate,
         lastSeenDate: section.lastSeenDate,
@@ -747,6 +959,7 @@ function parseRemovedPayloadItems(inputPath, args) {
     seen.add(actionKey);
 
     const traceFields = readSummaryTrace(action.latest_summary_path);
+    const actionContract = deriveActionContract(actionText);
     items.push({
       inputPath: removedPath,
       payload: {
@@ -755,7 +968,9 @@ function parseRemovedPayloadItems(inputPath, args) {
         contactId: objectType === 'contact' ? objectId : null,
         sourceDate: action.removed_date || asOfDate,
         evidenceDate: action.source_date || null,
-        actionText,
+        actionTitle: action.action_title || actionContract.actionTitle,
+        actionCategory: action.action_category || actionContract.actionCategory,
+        actionText: actionContract.actionText,
         status: statusForRemovalReason(action.removal_reason),
         firstSeenDate: action.first_seen_date || null,
         lastSeenDate: action.last_seen_date || null,
@@ -789,6 +1004,24 @@ function buildPayloadsForFiles(args) {
     payloads.push(...parseRemovedPayloadItems(inputPath, args));
   }
   return payloads;
+}
+
+function payloadContractWarnings(payloadItems) {
+  const warnings = [];
+  payloadItems.forEach((item, index) => {
+    for (const warning of compoundActionWarnings(item.payload)) {
+      warnings.push({
+        index: index + 1,
+        inputPath: toRelativePath(item.inputPath),
+        actionKey: item.payload.actionKey,
+        actionTitle: item.payload.actionTitle || null,
+        actionCategory: item.payload.actionCategory || null,
+        actionText: item.payload.actionText,
+        warning,
+      });
+    }
+  });
+  return warnings;
 }
 
 function buildUrl(baseUrl, routePath) {
@@ -935,7 +1168,8 @@ async function postInboxItems(baseUrl, token, payloads, args) {
 function summarizePayload(payload) {
   const target = payload.accountId ? `account:${payload.accountId}` : `contact:${payload.contactId}`;
   const removal = payload.removalReason ? ` (${payload.removalReason})` : '';
-  return `${target} ${payload.sourceDate} ${payload.status}${removal} - ${payload.actionText}`;
+  const title = payload.actionTitle ? `${payload.actionTitle} :: ` : '';
+  return `${target} ${payload.sourceDate} ${payload.status}${removal} - ${title}${payload.actionText}`;
 }
 
 async function main() {
@@ -952,15 +1186,22 @@ async function main() {
       throw new Error(`No action files found for ${args.importDate}. Pass --date=YYYY-MM-DD or --file PATH.`);
     }
   }
+  args.filePaths = filterFilesByWorkspaceTeams(args.filePaths, args.workspaceTeams);
+  if (args.filePaths.length === 0) {
+    throw new Error(`No action files matched selected team(s) for ${args.importDate}.`);
+  }
 
   const payloads = buildPayloadsForFiles(args);
+  const contractWarnings = payloadContractWarnings(payloads);
   if (payloads.length === 0) {
     if (args.json) {
       console.log(JSON.stringify({
         dry_run: args.dryRun,
         route: postRoutePath,
         count: 0,
-        payloads: [],
+        contract_warning_count: 0,
+        contract_warnings: [],
+        payloads: args.summaryJson ? undefined : [],
       }, null, 2));
     } else {
       console.log(`No inbox payloads found for ${args.importDate}.`);
@@ -974,7 +1215,9 @@ async function main() {
         dry_run: true,
         route: postRoutePath,
         count: payloads.length,
-        payloads: payloads.map((item) => ({
+        contract_warning_count: contractWarnings.length,
+        contract_warnings: args.summaryJson ? contractWarnings.slice(0, 50) : contractWarnings,
+        payloads: args.summaryJson ? undefined : payloads.map((item) => ({
           input_path: toRelativePath(item.inputPath),
           ...item.payload,
         })),
@@ -983,12 +1226,25 @@ async function main() {
     }
 
     console.log(`Dry run: parsed ${payloads.length} inbox payloads for POST ${postRoutePath}.`);
+    if (contractWarnings.length > 0) {
+      console.log(`Contract warnings: ${contractWarnings.length}`);
+      for (const warning of contractWarnings.slice(0, 25)) {
+        console.log(`- ${warning.inputPath} ${warning.actionKey}: ${warning.warning}`);
+      }
+      if (contractWarnings.length > 25) {
+        console.log(`... ${contractWarnings.length - 25} more contract warnings`);
+      }
+    }
     if (!args.quiet) {
       for (const item of payloads) {
         console.log(`- ${summarizePayload(item.payload)}`);
       }
     }
     return;
+  }
+
+  if (contractWarnings.length > 0) {
+    throw new Error(`Inbox payload contract failed with ${contractWarnings.length} warning(s). Run --dry-run --json to inspect action rows before live posting.`);
   }
 
   loadDotEnv(envFilePath);
@@ -1002,6 +1258,7 @@ async function main() {
       dry_run: false,
       route: postRoutePath,
       posted: results.length,
+      contract_warning_count: contractWarnings.length,
       skipped_duplicates: skippedDuplicates.length,
       skipped_missing_team_links: skippedMissingTeamLinks.length,
       failed: failed.length,
@@ -1041,6 +1298,11 @@ module.exports = {
   parseInboxPayloads,
   parseRemovedPayloadItems,
   buildPayloadsForFiles,
+  payloadContractWarnings,
+  deriveActionContract,
+  compoundActionWarnings,
   makeActionKey,
+  actionLookupKey,
+  normalizeActionText,
   statusForRemovalReason,
 };
