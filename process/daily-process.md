@@ -169,6 +169,12 @@ node scripts/post-inbox.js --date={yyyy-mm-dd} --dry-run
 
 The Inbox dry-run parses active rows from `actions-{yyyy-mm-dd}.md` and same-day removed rows from `removed-actions-{yyyy-mm-dd}.json` when present.
 
+When publishing directly to SQL rather than the Inbox API route, dry-run the SQL merge and stale cleanup against explicit teams:
+
+```text
+node scripts/post-inbox-sql.js --date={yyyy-mm-dd} --teams={teamIds} --dry-run
+```
+
 14. If the dry-run passes and the user requested posting, run the live Inbox post:
 
 ```text
@@ -181,6 +187,8 @@ Live posting requires:
 - `CRM_BASE_URL`
 - `CRM_ACCESS_TOKEN`
 
+Direct SQL posting instead requires `AIW_ENABLE_SQL_INBOX_UPSERT=1` plus `SQL_SERVER`, `SQL_DATABASE`, `SQL_USER`, and `SQL_PASSWORD`. Use `scripts/post-inbox-sql.js --teams={teamIds}` when stale cleanup must be limited to the rebuilt teams.
+
 If gates are missing, stop after dry-run and report that posting was blocked by the explicit write boundary.
 
 ## Posting Rules
@@ -192,6 +200,8 @@ node scripts/post-inbox.js --date={yyyy-mm-dd}
 ```
 
 Inbox rows are the operational queue. They should include the action text, status, first/last seen dates, source paths, action key, and trace content from the action report. Same-day removed actions should be posted as non-open statuses so stale Inbox rows can be closed, superseded, or marked no longer supported.
+
+For direct SQL publishing, `scripts/post-inbox-sql.js` additionally closes selected-team open rows whose `ActionKey` is absent from the current local queue, then merges current payload rows by `(TeamId, ActionKey)`. Do not run cleanup for teams whose queue has not been rebuilt.
 
 Post accumulated action markdown snapshots to CRM `Actions` only when the user explicitly asks for an archived daily snapshot:
 
