@@ -8,9 +8,9 @@
  * scripts/build-accumulated-actions.js. The script writes one inbox payload per
  * checkbox action, deduped by a stable actionKey. It also reads the matching
  * removed-actions-YYYY-MM-DD.json file by default so Inbox can close stale work
- * items when local accumulated state retires them. Recent change: payloads now
- * include full action trace fields for operator context, while CRM Actions
- * posting is treated as archive-only outside this script.
+ * items when local accumulated state retires them. Recent change: traceMarkdown
+ * is an evidence trail only; judgment text stays in the separate insight,
+ * tensions, and memory fields.
  */
 
 const crypto = require('crypto');
@@ -563,11 +563,28 @@ function traceFieldsForSection(section) {
   const tensionsText = truncate(subsectionText(section, 'Tensions'), traceTextMaxLength);
   const memoryText = truncate(subsectionText(section, 'Memory'), traceTextMaxLength);
   return {
-    traceMarkdown: truncate(compactMarkdownLines(section.lines), traceMarkdownMaxLength),
     insightText,
     tensionsText,
     memoryText,
   };
+}
+
+function activeTraceMarkdown(section, objectType, objectId, actionLine, metadata, sourceActionsReportPath) {
+  const evidenceDate = metadata.evidenceDate || section.sourceDate || null;
+  return truncate([
+    `### Evidence trail for ${objectType}:${objectId}`,
+    '',
+    objectType === 'account' ? `- Account key: account:${objectId}` : `- Contact key: contact:${objectId}`,
+    `- First seen: ${section.firstSeenDate || 'unknown'}`,
+    `- Last seen: ${section.lastSeenDate || 'unknown'}`,
+    `- Source date: ${section.sourceDate || 'unknown'}`,
+    `- Evidence date: ${evidenceDate || 'unknown'}`,
+    `- Source actions report: ${sourceActionsReportPath}`,
+    '',
+    '#### Action item',
+    '',
+    actionLine,
+  ].join('\n'), traceMarkdownMaxLength);
 }
 
 function parseInboxPayloads(markdown, inputPath, args) {
@@ -601,6 +618,7 @@ function parseInboxPayloads(markdown, inputPath, args) {
       seen.add(actionKey);
 
       const metadata = activeMetadata.get(actionLookupKey(workspaceTeamId, objectType, objectId, parsedAction.actionText)) || {};
+      const trimmedActionLine = actionLine.trim();
 
       payloads.push({
         teamId,
@@ -617,8 +635,9 @@ function parseInboxPayloads(markdown, inputPath, args) {
         sourcePath,
         sourceActionsReportPath: sourcePath,
         sourceSummaryPath: metadata.latestSummaryPath || null,
-        sourceMarkdownSection: sourceMarkdownPreview(section, objectType, objectId, actionLine.trim()),
+        sourceMarkdownSection: sourceMarkdownPreview(section, objectType, objectId, trimmedActionLine),
         actionKey,
+        traceMarkdown: activeTraceMarkdown(section, objectType, objectId, trimmedActionLine, metadata, sourcePath),
         ...traceFields,
       });
     }
@@ -660,11 +679,11 @@ function readSummaryTrace(summaryPath) {
   };
 }
 
-function removedTraceMarkdown(action, traceFields) {
+function removedTraceMarkdown(action, sourcePath, sourceActionsReportPath) {
   const objectType = action.object_type;
   const objectId = action.object_id;
   return truncate([
-    `### Removed ${objectType}:${objectId}`,
+    `### Evidence trail for removed ${objectType}:${objectId}`,
     '',
     `- ${objectType === 'account' ? 'Account' : 'Contact'} key: ${objectType}:${objectId}`,
     `- First seen: ${action.first_seen_date || 'unknown'}`,
@@ -672,23 +691,12 @@ function removedTraceMarkdown(action, traceFields) {
     `- Source date: ${action.source_date || 'unknown'}`,
     `- Removed date: ${action.removed_date || 'unknown'}`,
     `- Removal reason: ${action.removal_reason || 'unknown'}`,
-    action.latest_summary_path ? `- Latest summary: ${action.latest_summary_path}` : '- Latest summary: unknown',
+    `- Removed actions file: ${sourcePath}`,
+    `- Source actions report: ${sourceActionsReportPath}`,
     '',
-    '#### Actions',
+    '#### Action item',
     '',
     `- [x] ${compact(action.action_text)}`,
-    '',
-    '#### Insight',
-    '',
-    traceFields.insightText || '_No `Insight` section found in the latest summary artifact._',
-    '',
-    '#### Tensions',
-    '',
-    traceFields.tensionsText || '_No `Tensions` section found in the latest summary artifact._',
-    '',
-    '#### Memory',
-    '',
-    traceFields.memoryText || '_No `Memory` section found in the latest summary artifact._',
   ].join('\n'), traceMarkdownMaxLength);
 }
 
@@ -758,7 +766,7 @@ function parseRemovedPayloadItems(inputPath, args) {
         sourceSummaryPath: action.latest_summary_path || null,
         sourceMarkdownSection: removedSourceMarkdownPreview(action),
         actionKey,
-        traceMarkdown: removedTraceMarkdown(action, traceFields),
+        traceMarkdown: removedTraceMarkdown(action, sourcePath, sourceActionsReportPath),
         ...traceFields,
       },
     });
